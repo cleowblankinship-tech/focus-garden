@@ -578,7 +578,7 @@ function updateTick(force){
 }
 function openSheet(){
   openModal(`<h2>Choose your flower</h2>
-    ${Object.entries(GROUPS).map(([g,info])=>`<div><div class="group-h"><span class="dot" style="--gc:${info.color}"></span>${info.name}</div><div class="topics">${TOPICS.filter(t=>t.group===g).map(t=>`<button class="topic" data-act="topic" data-id="${t.id}" aria-pressed="${state.prefs.topic===t.id}"><span class="thumb">${iconSVG(t.flower)}</span><span>${esc(t.name)}<br><span class="hint">${FLOWER_NAME[t.flower]}</span></span></button>`).join('')}</div></div>`).join('')}
+    ${Object.entries(GROUPS).map(([g,info])=>`<div><div class="group-h"><span class="dot" style="--gc:${info.color}"></span>${info.name}</div><div class="topics">${TOPICS.filter(t=>t.group===g).map(t=>`<button class="topic" data-act="topic" data-id="${t.id}" aria-pressed="${state.prefs.topic===t.id}"><span class="thumb">${iconSVG(t.flower)}</span><span>${esc(t.name)}</span></button>`).join('')}</div></div>`).join('')}
     <div><h3 style="margin-bottom:8px">How long will you focus?</h3><div class="lens">${TIER_LIST.map(m=>`<button class="len" data-act="tier" data-m="${m}" aria-pressed="${state.prefs.tier===m}"><b>${m}</b><small>min</small></button>`).join('')}</div>
     <p class="hint" id="tier-desc" style="margin-top:8px">${TIERS[state.prefs.tier].desc}. Longer sessions grow bigger, fuller flowers.</p></div>
     <button class="btn primary" data-act="close" id="btn-done" data-autofocus>Done</button>`,()=>closeModal());
@@ -687,7 +687,26 @@ function plantAt(s){ // drawn at the origin (cell centre)
   else o+=`<path d="M0 0 L0 ${-h}" stroke="${STEM}" stroke-width="2" stroke-linecap="round"/><path d="M0 ${-h*.35} q6 -6 11 -1 q-5 5 -11 1z" fill="${LEAF}"/><path d="M0 ${-h*.5} q-6 -6 -11 -1 q5 5 11 1z" fill="${LEAF}"/>`+headAt(tp.flower,f,0,-h,sc,Math.min(2,T.layers));
   return o;
 }
-function isoPlot(list,n,seed){
+function hash01(str){let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
+  h1=Math.imul(h1^h1>>>16,2246822507)^Math.imul(h2^h2>>>13,3266489909);return (h1>>>0)/4294967296;}
+let placeSig='',placeMap=new Map();
+function placeAll(){ // every session gets one spot on the plot, the same in Day, Week, Month and Year
+  const sig=state.sessions.map(x=>x.id+x.at).join('|');if(sig===placeSig)return placeMap;
+  const placed=[],map=new Map();
+  state.sessions.slice().sort((a,b)=>a.at-b.at||(a.id<b.id?-1:1)).forEach(x=>{
+    let best=null,bestD=-1;
+    for(let k=0;k<30;k++){
+      const u=.08+.84*hash01(x.id+'u'+k),v=.08+.84*hash01(x.id+'v'+k);
+      let md=9;for(const q of placed){const d=Math.hypot(q.u-u,q.v-v);if(d<md)md=d;}
+      const need=.2*(1-k/30);
+      if(md>=need){best={u,v};break;}
+      if(md>bestD){bestD=md;best={u,v};}
+    }
+    placed.push(best);map.set(x.id,best);
+  });
+  placeSig=sig;placeMap=map;return map;
+}
+function isoPlot(list,n,pos){
   const half=185,cw=half/n,ch=cw/2,ox=200,oy=108,t=26,k=cw/34;
   let o=`<svg viewBox="0 0 400 350" class="plot" role="img" aria-label="${list.length} flowers planted on a grass plot"><defs><filter id="shblur" x="-10%" y="-10%" width="120%" height="130%"><feGaussianBlur stdDeviation="4"/></filter></defs>`;
   { // soft footprint shadow, tucked right under the soil edge
@@ -706,10 +725,7 @@ function isoPlot(list,n,seed){
     const x=ox+(c-r)*cw,y=oy+(c+r)*ch;
     o+=`<path d="M${x} ${y} L${x+cw} ${y+ch} L${x} ${y+2*ch} L${x-cw} ${y+ch}Z" fill="${(r+c)%2?'#94D151':'#87C648'}" stroke="rgba(50,100,20,.14)" stroke-width="1"/>`;
   }
-  const cells=Array.from({length:n*n},(_,i)=>i);
-  let h=seed>>>0||1;const rnd=()=>{h|=0;h=h+0x6D2B79F5|0;let t2=Math.imul(h^h>>>15,1|h);t2=t2+Math.imul(t2^t2>>>7,61|t2)^t2;return((t2^t2>>>14)>>>0)/4294967296;};
-  for(let i=cells.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[cells[i],cells[j]]=[cells[j],cells[i]];}
-  list.map((s,i)=>({s,r:Math.floor(cells[i]/n),c:cells[i]%n})).sort((a,b)=>(a.r+a.c)-(b.r+b.c)||a.r-b.r)
+  list.map(s=>{const q=pos.get(s.id)||{u:.5,v:.5};return {s,r:q.v*n,c:q.u*n};}).sort((a,b)=>(a.r+a.c)-(b.r+b.c))
     .forEach(({s,r,c})=>{o+=`<g transform="translate(${(ox+(c-r)*cw).toFixed(1)} ${(oy+(c+r+1)*ch+1).toFixed(1)}) scale(${k.toFixed(3)})"><g${state.fresh.includes(s.id)?` class="plantpop" style="animation-delay:${(.3+state.fresh.indexOf(s.id)*.18).toFixed(2)}s"`:''}>${plantAt(s)}</g></g>`;});
   return o+'</svg>';
 }
@@ -793,7 +809,7 @@ function renderGarden(){
       <header class="hdr"><h1 class="title">Garden</h1><a class="rbtn" href="#focus" id="link-focus" aria-label="Back to timer">__CLOCK__</a></header>
       <div class="seg" role="group" aria-label="Time range">${['day','week','month','year'].map(v=>`<button data-act="range" data-v="${v}" aria-pressed="${gRange===v}">${v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</div>
       <div class="rnav"><button data-act="prev" aria-label="Previous ${gRange}">‹</button><span id="range-label">${rangeLabel(gRange,gOff,a,b)}</span><button data-act="next" aria-label="Next ${gRange}" ${gOff>=0?'disabled':''}>›</button></div>
-      <div class="plotbox">${isoPlot(shown,n,(a/1000|0)+gRange.length*7919+n)}
+      <div class="plotbox">${isoPlot(shown,n,placeAll())}
         <div class="hud" id="hud"><span class="hud-t">${hudT}</span><span class="hud-r">${IC_B}<b id="rng-bloomed">${bl}</b><span class="sr"> bloomed</span></span><span class="hud-r">${IC_W}<b id="rng-withered">${wi}</b><span class="sr"> withered</span></span></div></div>
       ${list.length?(list.length>144?'<p class="empty-note">Showing the latest 144 flowers.</p>':''):'<p class="empty-note">Nothing planted in this period yet. Finish a focus session to grow a flower here.</p>'}
     </div>
