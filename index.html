@@ -20,9 +20,11 @@
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background-color:var(--sage);background-image:radial-gradient(130% 90% at 50% 42%,rgba(0,0,0,0) 58%,rgba(20,60,45,.2) 100%);background-attachment:fixed;color:var(--ink);font:400 16px/1.45 var(--font-body)}
 button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer}
-:focus-visible{outline:3px solid var(--cream);outline-offset:3px}
-.panel :focus-visible,.modal :focus-visible{outline-color:var(--forest)}
+button{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+:focus{outline:none}
+:root[data-kb] :focus-visible{outline:2px solid var(--ring,var(--cream));outline-offset:2px}
+.panel,.modal{--ring:var(--forest)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--forest)}
 h1,h2,h3{font-family:var(--font-body);margin:0;line-height:1.15;text-wrap:balance}
 p{margin:0}
 .pad{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -38,15 +40,18 @@ p{margin:0}
 .rbtn{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:rgba(242,235,201,.16);border:1.5px solid rgba(242,235,201,.5);color:var(--cream);text-decoration:none}
 .rbtn:hover{background:rgba(242,235,201,.26)}
 .rbtn svg{width:24px;height:24px}
-.focus{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:68px 0;text-align:center}
+.focus{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;gap:clamp(10px,2dvh,16px);padding:68px 0 28px;padding:clamp(52px,8dvh,68px) 0 clamp(20px,4dvh,40px);text-align:center}
 .say{color:var(--cream);font-weight:700;letter-spacing:.02em;min-height:1.5em}
-.disc{width:min(72vw,300px);aspect-ratio:1;flex:none;border-radius:50%;background:var(--disc);overflow:hidden;display:flex;justify-content:center;align-items:flex-end;box-shadow:0 14px 34px rgba(20,60,45,.2)}
+.discwrap{position:relative;flex:none;width:min(72vw,300px);width:min(72vw,34dvh,300px);aspect-ratio:1}
+.disc{position:relative;width:100%;height:100%;border-radius:50%;background:var(--disc);overflow:hidden;display:flex;justify-content:center;align-items:flex-end;box-shadow:0 14px 34px rgba(20,60,45,.2)}
 .disc svg{height:100%;width:100%;display:block;transform-origin:50% 100%}
+.disc svg.wither-in,.disc svg.droop-out{position:absolute;inset:0}
 .tpill{display:inline-flex;align-items:center;gap:10px;min-height:40px;padding:6px 16px;border-radius:999px;border:1.5px solid rgba(242,235,201,.55);background:rgba(242,235,201,.1);color:var(--cream);font-weight:700}
 button.tpill::after{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px)}
-.time{font-family:var(--font-time);font-weight:300;font-size:clamp(5.2rem,30vw,9.5rem);line-height:1;display:flex;justify-content:center;color:var(--cream);opacity:.88}
+.time{font-family:var(--font-time);font-weight:300;font-size:clamp(5.2rem,30vw,9.5rem);font-size:clamp(4.4rem,min(28vw,12dvh),9.5rem);line-height:1;display:flex;justify-content:center;color:var(--cream);opacity:.88}
 .time .d{display:inline-block;width:.58em;text-align:center}
 .time .c{display:inline-block;width:.3em;text-align:center}
+.ending .ctl{opacity:0;pointer-events:none}
 .ctl{display:flex;flex-direction:column;align-items:center;gap:6px}
 .ctl .row{display:flex;gap:6px}
 .pillbtn{min-width:220px;min-height:62px;border-radius:999px;border:none;background:var(--cream);color:var(--forest);font:800 1.2rem var(--font-body);box-shadow:0 5px 0 rgba(30,85,62,.28);transition:transform .12s,box-shadow .12s}
@@ -64,12 +69,10 @@ button.giveup{color:#5B2819;text-decoration:none;font-size:.9rem;font-weight:800
 .rnav span{min-width:150px;text-align:center}
 .plotbox{position:relative;max-width:540px;margin:0 auto}
 .plot{width:100%;height:auto;display:block}
-.hud{position:absolute;top:2px;right:0;display:flex;flex-direction:column;gap:5px;min-width:122px;padding:10px 14px;border-radius:18px;background:rgba(10,45,32,.3);color:var(--cream);font-size:.86rem;font-weight:700}
-.hud-t{font:400 1.1rem/1 var(--font-hand);opacity:.95;margin-bottom:2px}
-.hud-r{display:flex;align-items:center;gap:7px;font-variant-numeric:tabular-nums}
-.hud-r b{font-size:1.1rem}
-.hd{width:9px;height:9px;border-radius:50%;background:#F3C14E;flex:none}
-.hd.w{background:#C9A37A}
+.hud{position:absolute;top:0;right:2px;display:flex;flex-direction:column;align-items:flex-end;gap:0;color:var(--cream);text-shadow:0 1px 3px rgba(10,50,35,.5)}
+.hud-t{font:400 1.05rem/1.2 var(--font-hand);opacity:.75}
+.hud-r{display:flex;align-items:center;gap:7px;font-weight:800;font-size:1.55rem;line-height:1.15;font-variant-numeric:tabular-nums}
+.hud-r svg{width:26px;height:26px;filter:drop-shadow(0 1px 2px rgba(10,50,35,.4))}
 .empty-note{text-align:center;color:var(--cream);opacity:.85;padding:4px 0 28px;font-weight:600}
 .panel{background:var(--paper);border-radius:30px 30px 0 0;margin-top:-6px;padding-top:26px;padding-bottom:calc(48px + env(safe-area-inset-bottom,0px));min-height:62dvh;box-shadow:0 -10px 30px rgba(10,40,28,.18)}
 .panel .pad{display:flex;flex-direction:column;gap:12px}
@@ -132,12 +135,12 @@ button.giveup{color:#5B2819;text-decoration:none;font-size:.9rem;font-weight:800
 .topics{display:grid;grid-template-columns:1fr;gap:8px}
 .topic{display:flex;align-items:center;gap:8px;text-align:left;padding:5px 10px 5px 5px;min-height:54px;border-radius:999px;border:1.5px solid var(--line);background:#F9FBF8;font-weight:700;line-height:1.15;min-width:0}
 .topic .thumb{width:42px;height:42px}
-.topic[aria-pressed="true"]{border-color:var(--forest);background:#E1EDD7;box-shadow:inset 0 0 0 1px var(--forest)}
+.topic[aria-pressed="true"]{border-color:var(--forest);background:#E1EDD7}
 .lens{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .len{padding:10px 0;border-radius:18px;border:1.5px solid var(--line);background:#F9FBF8;font-weight:700;text-align:center;line-height:1.1}
 .len b{display:block;font:800 1.5rem/1 var(--font-body)}
 .len small{color:var(--muted);font-weight:700}
-.len[aria-pressed="true"]{border-color:var(--forest);background:#E1EDD7;box-shadow:inset 0 0 0 1px var(--forest)}
+.len[aria-pressed="true"]{border-color:var(--forest);background:#E1EDD7}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-weight:800;font-size:.9rem}
 .field input,.field select,.field textarea{border:1.5px solid var(--line);background:#F9FBF8;border-radius:14px;padding:10px 12px;min-height:46px;width:100%}
@@ -147,6 +150,17 @@ button.giveup{color:#5B2819;text-decoration:none;font-size:.9rem;font-weight:800
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;background:var(--ink);color:var(--cream);padding:10px 18px;border-radius:999px;font-weight:700;max-width:calc(100% - 32px);text-align:center}
 
 @media (prefers-reduced-motion: no-preference){
+  .discwrap.bounce{animation:bounce 1s ease-out .3s}
+  .headpop{transform-box:fill-box;transform-origin:50% 70%;animation:headpop .9s cubic-bezier(.3,1.6,.5,1) both}
+  @keyframes headpop{0%{transform:scale(.25);opacity:0}35%{opacity:1}100%{transform:scale(1);opacity:1}}
+  .petal{position:absolute;left:50%;top:30%;width:11px;height:15px;border-radius:70% 0 70% 0;opacity:0;pointer-events:none;animation:drift 2.4s ease-in both;box-shadow:inset 0 0 0 1px rgba(60,40,0,.18)}
+  @keyframes drift{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.5)}15%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(1)}}
+  .disc svg.droop-out .sway{animation:droopOut 1.1s ease-in forwards;transform-origin:100px 236px}
+  @keyframes droopOut{0%{filter:none;opacity:1;transform:none}55%{filter:sepia(.85) saturate(.7) brightness(.9);opacity:1;transform:rotate(6deg)}100%{filter:sepia(1) saturate(.6) brightness(.85);opacity:0;transform:rotate(11deg)}}
+  .disc svg.wither-in{position:absolute;inset:0;animation:witherIn 1s ease-out .45s both}
+  @keyframes witherIn{from{opacity:0}to{opacity:1}}
+  .plantpop{transform-box:fill-box;transform-origin:50% 100%;animation:plantpop .8s cubic-bezier(.3,1.7,.5,1) both}
+  @keyframes plantpop{0%{transform:scale(0)}100%{transform:scale(1)}}
   .alive .sway{animation:sway 5s ease-in-out infinite;transform-origin:100px 236px}
   @keyframes sway{0%,100%{transform:rotate(-1.3deg)}50%{transform:rotate(1.3deg)}}
   .disc svg.pop{animation:pop .8s cubic-bezier(.3,1.6,.5,1)}
@@ -206,6 +220,7 @@ function load(){
   if(!TOPIC[s.prefs.topic])s.prefs.topic='retirement';
   if(!TIERS[s.prefs.tier])s.prefs.tier=45;
   if(!s.timer)s.timer=null;
+  if(!Array.isArray(s.fresh))s.fresh=[];
   return s;
 }
 let state=load();
@@ -354,17 +369,16 @@ function headAt(fkey,c,x,y,s,L,rotate=0){
   return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rotate}) scale(${s.toFixed(3)}) translate(0 ${-lift})">${HEADS[fkey](c,L)}</g>`;
 }
 function ground(){return `<path d="M16 236 L184 236 C178 264 146 282 100 282 C54 282 22 264 16 236Z" style="fill:var(--soil)"/><path d="M30 246 C40 262 62 272 84 275" fill="none" stroke="rgba(255,235,200,.22)" stroke-width="3" stroke-linecap="round"/><ellipse cx="100" cy="236" rx="84" ry="11" style="fill:var(--soil-d)"/>`;}
-function flowerSVG(fkey,tier,stage,p){
-  p=p==null?1:p;
-  const T=TIERS[tier]||TIERS[45],f=FL[fkey],wil=stage==='withered';
-  const c=wil?WITHER:f, full=88+T.ti*12, S=.76, bx=100, by=236;
-  let H;
-  if(wil)H=full*.9;
-  else if(stage==='sprout')H=30+24*clamp(p/.12);
-  else if(stage==='growing')H=full*(.35+.45*clamp((p-.12)/.33));
-  else if(stage==='budding')H=full*(.8+.2*clamp((p-.45)/.55));
-  else H=full;
+function mixHex(a,b,t){const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16);return '#'+[16,8,0].map(k=>Math.round(((A>>k)&255)*(1-t)+((B>>k)&255)*t).toString(16).padStart(2,'0')).join('');}
+function flowerSVG(fkey,tier,stage,p,anim){
+  p=p==null?1:clamp(p);
+  const T=TIERS[tier]||TIERS[45],f=FL[fkey],wil=stage==='withered',bloomed=stage==='bloomed';
+  if(bloomed)p=1;
+  const full=88+T.ti*12, S=.76, bx=100, by=236;
+  const g=1-Math.pow(1-p,1.6); // eased, continuous growth 0..1
+  const H=wil?full*.9:24+(full-24)*g;
   const topY=by-H, sw=f.thin?3.6:5+T.ti*.6;
+  const pop=(h,d)=>anim?`<g class="headpop" style="animation-delay:${d}s">${h}</g>`:h;
   let s=`<svg viewBox="-8 92 216 216" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(FLOWER_NAME[fkey])}, ${esc(STAGE_LABEL[stage])}">`;
   s+=ground();
   if(wil){ // fallen petals on the soil
@@ -372,38 +386,38 @@ function flowerSVG(fkey,tier,stage,p){
   }
   s+=`<g class="sway"><g transform="translate(100 236) scale(${S}) translate(-100 -236)">`;
   let ex=bx,ey=topY;
-  // stem
   if(wil){
     ex=128;ey=by-H*.92;
     s+=`<path d="M${bx} ${by} C${bx} ${by-H*.6} ${bx+4} ${by-H*1.0} ${ex} ${ey}" fill="none" stroke="${STEM_W}" stroke-width="${sw}" stroke-linecap="round"/>`;
   }else{
     s+=`<path d="M${bx} ${by} C${bx-4} ${by-H*.35} ${bx+4} ${by-H*.7} ${bx} ${topY}" fill="none" stroke="${STEM}" stroke-width="${sw}" stroke-linecap="round"/>`;
   }
-  // leaves
-  if(stage==='sprout'){
-    s+=leaf(bx,topY+6,1,.5,1,false)+leaf(bx,topY+6,-1,.5,1,false);
-  }else{
-    const n=wil?T.leaves:(stage==='growing'?Math.max(2,Math.round(T.leaves*H/full)):T.leaves);
-    const ls=(.5+.5*H/full)*f.leaf*(wil?.9:1);
-    for(let i=0;i<n;i++){
-      const y=by-H*(.14+.46*(i/Math.max(1,n-1)));
-      s+=leaf(bx,y,i%2?-1:1,ls,f.ly,wil);
-    }
+  // leaves unfurl one after another as the stem grows
+  const n=T.leaves;
+  for(let i=0;i<n;i++){
+    const grow=wil?1:clamp((p-(-.1+i*.5/n))/.14);
+    if(grow<.03)continue;
+    const y=by-H*(.14+.46*(i/Math.max(1,n-1)));
+    s+=leaf(bx,y,i%2?-1:1,(.5+.5*H/full)*f.leaf*grow*(wil?.9:1),f.ly,wil);
   }
-  // side blossoms
-  if(!wil&&(stage==='budding'||stage==='bloomed')&&T.extras){
+  // side blossoms: buds swell, then open with the main flower
+  if(!wil&&p>=.5&&T.extras){
     for(let i=0;i<T.extras;i++){
-      const side=T.extras===1?1:(i?1:-1), y0=by-H*(.5+.07*i), tx=bx+side*40, ty=y0-34;
-      s+=`<path d="M${bx} ${y0} Q${bx+side*8} ${ty+8} ${tx} ${ty}" fill="none" stroke="${STEM}" stroke-width="2.6" stroke-linecap="round"/>`;
-      s+=stage==='bloomed'?headAt(fkey,f,tx,ty,.5,1):`<g transform="translate(${tx} ${ty})">${buddy(fkey,f,.6)}</g>`;
+      const side=T.extras===1?1:(i?1:-1), y0=by-H*(.5+.07*i), tx=bx+side*40, ty=y0-34, e=clamp((p-.5)/.4);
+      s+=`<path d="M${bx} ${y0} Q${bx+side*8} ${ty+8} ${tx} ${ty}" fill="none" stroke="${STEM}" stroke-width="2.6" stroke-linecap="round" opacity="${e.toFixed(2)}"/>`;
+      s+=bloomed?pop(headAt(fkey,f,tx,ty,.5,1),.25+i*.12):`<g transform="translate(${tx} ${ty})" opacity="${e.toFixed(2)}">${buddy(fkey,{petal:mixHex('#4E8F45',f.petal,clamp((p-.7)/.2)),petal2:mixHex('#4E8F45',f.petal2,clamp((p-.7)/.2))},.6*e)}</g>`;
     }
   }
   // head
   if(wil)s+=headAt(fkey,WITHER,ex,ey,T.scale*.85,Math.min(T.layers,2),128);
-  else if(stage==='sprout'){/* just a sprout */}
-  else if(stage==='growing')s+=`<g transform="translate(${bx} ${topY})">${E(0,-5,4+3*clamp((p-.12)/.33),7+4*clamp((p-.12)/.33),LEAF_D)}</g>`;
-  else if(stage==='budding')s+=`<g transform="translate(${bx} ${topY})">${buddy(fkey,f,T.scale*(.85+.35*clamp((p-.45)/.55)))}</g>`;
-  else s+=headAt(fkey,f,bx,topY,T.scale,T.layers);
+  else if(bloomed)s+=pop(headAt(fkey,f,bx,topY,T.scale,T.layers),0);
+  else{
+    const appear=clamp((p-.05)/.1);
+    if(appear>0){
+      const m=clamp((p-.55)/.3),pal={petal:mixHex('#4E8F45',f.petal,m),petal2:mixHex('#4E8F45',f.petal2,m)};
+      s+=`<g transform="translate(${bx} ${topY})">${buddy(fkey,pal,T.scale*(.3+.7*clamp((p-.05)/.9))*appear)}</g>`;
+    }
+  }
   s+=`</g></g></svg>`;
   return s;
 }
@@ -432,7 +446,36 @@ function resumeTimer(){
   const t=state.timer;if(!t||t.resumedAt!=null)return;
   t.resumedAt=Date.now();save();renderFocus();requestWake();
 }
-function endTimer(bloomed){
+function setClockEl(el,clock){if(el.dataset.v===clock)return;el.dataset.v=clock;el.setAttribute('aria-label','Time remaining '+clock);el.innerHTML=clock.split('').map(ch=>ch===':'?'<span class="c">:</span>':'<span class="d">'+ch+'</span>').join('');}
+let animating=false,booting=true;
+const reduceMotion=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+function spawnPetals(wrap,fkey){
+  const f=FL[fkey],cols=[f.petal,f.petal2];
+  for(let i=0;i<10;i++){
+    const el=document.createElement('i');el.className='petal';
+    const dir=i%2?1:-1,dx=dir*(30+Math.random()*110),dy=70+Math.random()*120;
+    el.style.cssText=`--dx:${dx.toFixed(0)}px;--dy:${dy.toFixed(0)}px;--rot:${(Math.random()*600-300).toFixed(0)}deg;background:${cols[i%2]};animation-delay:${(.3+Math.random()*.6).toFixed(2)}s;animation-duration:${(1.9+Math.random()*.9).toFixed(2)}s`;
+    wrap.appendChild(el);setTimeout(()=>el.remove(),4200);
+  }
+}
+function playEnd(t,bloomed,done){
+  animating=true;
+  const topic=TOPIC[t.topic],fl=$('#flower'),wrap=$('#discwrap'),stage=$('#stage');
+  stage.classList.add('ending');stage.classList.remove('alive');
+  $('#say').textContent=bloomed?'It bloomed!':'It withered…';
+  if(bloomed)setClockEl($('#time'),'00:00');
+  if(bloomed){
+    fl.innerHTML=flowerSVG(topic.flower,t.tier,'bloomed',1,true);
+    wrap.classList.add('bounce');spawnPetals(wrap,topic.flower);
+    try{navigator.vibrate&&navigator.vibrate([18,40,18]);}catch(e){}
+    setTimeout(done,1900);
+  }else{
+    const cur=fl.firstElementChild;if(cur)cur.classList.add('droop-out');
+    fl.insertAdjacentHTML('beforeend',flowerSVG(topic.flower,t.tier,'withered',1).replace('<svg','<svg class="wither-in"'));
+    setTimeout(done,1700);
+  }
+}
+function endTimer(bloomed,animate){
   const t=state.timer;if(!t)return;
   const now=Date.now();
   let secs=Math.floor(focusedMs(t,now)/1000),at=now;
@@ -444,13 +487,13 @@ function endTimer(bloomed){
   let session=null;
   if(secs>=MIN_LOG_SECS){
     session={id:uid(),topic:t.topic,tier:t.tier,secs,status:bloomed?'bloomed':'withered',at,note:'',manual:false};
-    state.sessions.push(session);
+    state.sessions.push(session);state.fresh.push(session.id);
   }
   save();
   closeModal(true);
-  renderAll();
-  if(session)showResult(session);
-  else toast('Under 30 seconds, so nothing was logged.');
+  const finish=()=>{animating=false;renderAll();if(session)showResult(session);else toast('Under 30 seconds, so nothing was logged.');};
+  if(session&&animate&&!reduceMotion()&&!$('#view-focus').hidden&&$('#flower'))playEnd(t,bloomed,finish);
+  else finish();
 }
 let wakeLock=null;
 function requestWake(){try{if(navigator.wakeLock&&document.visibilityState==='visible'&&!wakeLock){navigator.wakeLock.request('screen').then(w=>{wakeLock=w;w.addEventListener('release',()=>{wakeLock=null;});}).catch(()=>{});}}catch(e){}}
@@ -475,7 +518,7 @@ function renderFocus(){
     <header class="hdr"><h1 class="title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14V9"/><path d="M12 10c-3.5 0-4.5-2.5-4.5-5 3.5 0 4.5 2 4.5 5zM12 10c3.5 0 4.5-2.5 4.5-5-3.5 0-4.5 2-4.5 5z"/><path d="M3 18l9 4 9-4-9-4z"/></svg>Focus Garden</h1><a class="rbtn" href="#garden" id="link-garden" aria-label="Open garden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14V9"/><path d="M12 10c-3.5 0-4.5-2.5-4.5-5 3.5 0 4.5 2 4.5 5zM12 10c3.5 0 4.5-2.5 4.5-5-3.5 0-4.5 2-4.5 5z"/><path d="M3 18l9 4 9-4-9-4z"/></svg></a></header>
     <div class="focus ${running?'alive':''}" id="stage">
       <p class="say" id="say"></p>
-      <div class="disc" id="flower"></div>
+      <div class="discwrap" id="discwrap"><div class="disc" id="flower"></div></div>
       ${t?'<p class="tpill" id="tpill"></p>':'<button class="tpill" id="btn-topic" data-act="sheet" aria-label="Choose topic and length"></button>'}
       <div class="time" id="time" role="timer">00:00</div>
       <div class="ctl">${ctl}</div>
@@ -484,18 +527,18 @@ function renderFocus(){
   updateTick(true);
 }
 function updateTick(force){
+  if(animating)return;
   const t=state.timer;
-  if(t&&t.resumedAt!=null&&focusedMs(t)>=t.plannedMs){endTimer(true);return;}
+  if(t&&t.resumedAt!=null&&focusedMs(t)>=t.plannedMs){endTimer(true,!booting&&document.visibilityState==='visible');return;}
   const timeEl=$('#time');if(!timeEl)return;
   let p,remaining,stage,topic,tier;
   if(t){const f=focusedMs(t);p=f/t.plannedMs;remaining=t.plannedMs-f;stage=stageOf(p);topic=TOPIC[t.topic];tier=t.tier;}
   else{p=.06;remaining=state.prefs.tier*60000;stage='sprout';topic=TOPIC[state.prefs.topic];tier=state.prefs.tier;}
   const clock=fmtClock(remaining);
-  if(timeEl.dataset.v!==clock){timeEl.dataset.v=clock;timeEl.setAttribute('aria-label','Time remaining '+clock);timeEl.innerHTML=clock.split('').map(ch=>ch===':'?'<span class="c">:</span>':'<span class="d">'+ch+'</span>').join('');}
-  const key=[topic.id,tier,stage,Math.floor(p*400)].join(':');
+  setClockEl(timeEl,clock);
+  const key=[topic.id,tier,stage,Math.floor(p*1000)].join(':');
   if(force||key!==lastKey){
     const fl=$('#flower');fl.innerHTML=flowerSVG(topic.flower,tier,stage,p);lastKey=key;
-    if(lastStage&&lastStage!==stage){const sv=fl.firstChild;if(sv)sv.classList.add('pop');}
     lastStage=stage;fl.dataset.stage=stage;
   }
   $('#say').textContent=!t?'Ready to plant':(t.resumedAt!=null?STAGE_LABEL[stage]+' · stay focused':'Paused · your flower is safe');
@@ -591,8 +634,10 @@ function submitSession(form){
     if(date===dateInputVal(now))at=now;
     state.sessions.push({id:uid(),topic,tier:tierForMinutes(min),secs:min*60,status,at:Math.min(at,now),note,manual:true});
     toast('Session added.');
+    state.fresh.push(state.sessions[state.sessions.length-1].id);
   }
   save();closeModal();renderAll();
+  if(!$('#view-garden').hidden&&state.fresh.length){state.fresh=[];save();}
 }
 function askDelete(id){
   const s=state.sessions.find(x=>x.id===id);if(!s)return;
@@ -615,8 +660,8 @@ function isoPlot(list,n,seed){
   const half=185,cw=half/n,ch=cw/2,ox=200,oy=108,t=26,k=cw/34;
   let o=`<svg viewBox="0 0 400 350" class="plot" role="img" aria-label="${list.length} flowers planted on a grass plot"><defs><filter id="shblur" x="-10%" y="-10%" width="120%" height="130%"><feGaussianBlur stdDeviation="4"/></filter></defs>`;
   { // soft footprint shadow, tucked right under the soil edge
-    const cyd=oy+n*ch+t+5,k2=.95;
-    o+=`<path d="M${ox} ${cyd-k2*n*ch} L${ox+k2*n*cw} ${cyd} L${ox} ${cyd+k2*n*ch} L${ox-k2*n*cw} ${cyd}Z" fill="rgba(0,0,0,.2)" filter="url(#shblur)"/>`;
+    const cyd=oy+n*ch+t+9,k2=1;
+    o+=`<path d="M${ox} ${cyd-k2*n*ch} L${ox+k2*n*cw} ${cyd} L${ox} ${cyd+k2*n*ch} L${ox-k2*n*cw} ${cyd}Z" fill="rgba(8,40,28,.34)" filter="url(#shblur)"/>`;
   }
   const L=[ox-n*cw,oy+n*ch],B=[ox,oy+2*n*ch],R=[ox+n*cw,oy+n*ch];
   o+=`<path d="M${L[0]} ${L[1]} L${B[0]} ${B[1]} L${B[0]} ${B[1]+t} L${L[0]} ${L[1]+t}Z" fill="#7C4C28"/>`;
@@ -634,10 +679,12 @@ function isoPlot(list,n,seed){
   let h=seed>>>0||1;const rnd=()=>{h|=0;h=h+0x6D2B79F5|0;let t2=Math.imul(h^h>>>15,1|h);t2=t2+Math.imul(t2^t2>>>7,61|t2)^t2;return((t2^t2>>>14)>>>0)/4294967296;};
   for(let i=cells.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[cells[i],cells[j]]=[cells[j],cells[i]];}
   list.map((s,i)=>({s,r:Math.floor(cells[i]/n),c:cells[i]%n})).sort((a,b)=>(a.r+a.c)-(b.r+b.c)||a.r-b.r)
-    .forEach(({s,r,c})=>{o+=`<g transform="translate(${(ox+(c-r)*cw).toFixed(1)} ${(oy+(c+r+1)*ch+1).toFixed(1)}) scale(${k.toFixed(3)})">${plantAt(s)}</g>`;});
+    .forEach(({s,r,c})=>{o+=`<g transform="translate(${(ox+(c-r)*cw).toFixed(1)} ${(oy+(c+r+1)*ch+1).toFixed(1)}) scale(${k.toFixed(3)})"><g${state.fresh.includes(s.id)?` class="plantpop" style="animation-delay:${(.3+state.fresh.indexOf(s.id)*.18).toFixed(2)}s"`:''}>${plantAt(s)}</g></g>`;});
   return o+'</svg>';
 }
 
+const IC_B=`<svg viewBox="-12 -12 24 24" aria-hidden="true">${ring(5,0,()=>E(0,-6,3.5,5.7,'#F6C945','stroke="rgba(60,40,0,.3)" stroke-width=".6"'))}${C(0,0,3.3,'#B97A14')}</svg>`;
+const IC_W=`<svg viewBox="-12 -12 24 24" aria-hidden="true"><path d="M-4 11 Q-4 -1 3 -5" stroke="#B7A27B" stroke-width="2" fill="none" stroke-linecap="round"/><g transform="translate(5 -4) rotate(125) scale(.34)">${HEADS.daisy(WITHER,1)}</g></svg>`;
 let gRange='week',gOff=0;
 function isDev(){return /[?&]dev=1\b/.test(location.search)||location.hash==='#dev';}
 const DEMO_NOTES=['Grantor vs. revocable trust','RMD calculation order','Roth conversion ordering','Passive activity loss limits','Duration vs. convexity','Needs analysis for life insurance','Capstone case: client cash-flow assumptions'];
@@ -678,7 +725,7 @@ function bucketize(v,a,list){
   if(v==='day'){n=24;idx=s=>new Date(s.at).getHours();lab=i=>i%6===0?['12a','6a','12p','6p'][i/6]:'';}
   else if(v==='week'){n=7;idx=s=>(new Date(s.at).getDay()+6)%7;lab=i=>['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i];}
   else if(v==='month'){const d=new Date(a);n=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();idx=s=>new Date(s.at).getDate()-1;lab=i=>(i===0||(i+1)%5===0)?String(i+1):'';}
-  else{n=12;idx=s=>new Date(s.at).getMonth();lab=i=>'JFMAMJJASOND'[i];}
+  else{n=12;idx=s=>new Date(s.at).getMonth();lab=i=>['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][i];}
   const vals=Array(n).fill(0);
   list.forEach(s=>{const i=idx(s);if(i>=0&&i<n)vals[i]+=s.secs;});
   return {vals,labels:vals.map((_,i)=>lab(i))};
@@ -692,7 +739,8 @@ function chartSVG(vals,labels){
   for(let i=0;i<=4;i++){const y=Tm+ph*(1-i/4);o+=`<line x1="${Lm}" x2="${W-Rm}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/><text x="${Lm-6}" y="${y+3.4}" text-anchor="end">${Math.round(ymax*i/4)}${hours?'h':'m'}</text>`;}
   vals.forEach((v,i)=>{
     const val=hours?v/3600:v/60,h=ph*val/ymax,x=Lm+slot*i+(slot-bw)/2;
-    if(v>0)o+=`<rect x="${x.toFixed(1)}" y="${(Tm+ph-Math.max(h,2)).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h,2).toFixed(1)}" rx="${(bw/2.5).toFixed(1)}" fill="var(--sage)"/>`;
+    if(v<=0)o+=`<rect x="${x.toFixed(1)}" y="${(Tm+ph-2.5).toFixed(1)}" width="${bw.toFixed(1)}" height="2.5" rx="1.2" fill="var(--sage)" opacity=".3"/>`;
+    else o+=`<rect x="${x.toFixed(1)}" y="${(Tm+ph-Math.max(h,2)).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h,2).toFixed(1)}" rx="${(bw/2.5).toFixed(1)}" fill="var(--sage)"/>`;
     if(labels[i])o+=`<text x="${(Lm+slot*i+slot/2).toFixed(1)}" y="${Hh-8}" text-anchor="middle">${labels[i]}</text>`;
   });
   return o+'</svg>';
@@ -715,7 +763,7 @@ function renderGarden(){
       <div class="seg" role="group" aria-label="Time range">${['day','week','month','year'].map(v=>`<button data-act="range" data-v="${v}" aria-pressed="${gRange===v}">${v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</div>
       <div class="rnav"><button data-act="prev" aria-label="Previous ${gRange}">‹</button><span id="range-label">${rangeLabel(gRange,gOff,a,b)}</span><button data-act="next" aria-label="Next ${gRange}" ${gOff>=0?'disabled':''}>›</button></div>
       <div class="plotbox">${isoPlot(shown,n,(a/1000|0)+gRange.length*7919+n)}
-        <div class="hud" id="hud"><span class="hud-t">${hudT}</span><span class="hud-r"><i class="hd"></i><b id="rng-bloomed">${bl}</b> bloomed</span><span class="hud-r"><i class="hd w"></i><b id="rng-withered">${wi}</b> withered</span></div></div>
+        <div class="hud" id="hud"><span class="hud-t">${hudT}</span><span class="hud-r">${IC_B}<b id="rng-bloomed">${bl}</b><span class="sr"> bloomed</span></span><span class="hud-r">${IC_W}<b id="rng-withered">${wi}</b><span class="sr"> withered</span></span></div></div>
       ${list.length?(list.length>144?'<p class="empty-note">Showing the latest 144 flowers.</p>':''):'<p class="empty-note">Nothing planted in this period yet. Finish a focus session to grow a flower here.</p>'}
     </div>
     <div class="panel"><div class="pad">
@@ -744,7 +792,7 @@ function route(){
   const h=location.hash.slice(1),v=(h==='garden'||h==='progress'||h==='dev')?'garden':'focus';
   document.body.dataset.view=v;
   $('#view-focus').hidden=v!=='focus';$('#view-garden').hidden=v!=='garden';
-  if(v==='garden')renderGarden();
+  if(v==='garden'){renderGarden();if(state.fresh.length){state.fresh=[];save();}}
   window.scrollTo(0,0);
 }
 window.addEventListener('hashchange',route);
@@ -762,7 +810,7 @@ document.addEventListener('click',e=>{
     case 'stop':askWither('stop');break;
     case 'giveup':askWither('giveup');break;
     case 'keep':if(modalKeep)modalKeep();break;
-    case 'wither':endTimer(false);break;
+    case 'wither':endTimer(false,true);break;
     case 'sheet':openSheet();break;
     case 'topic':
       state.prefs.topic=id;save();
@@ -806,7 +854,10 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 window.addEventListener('storage',e=>{if(e.key===LS_KEY){state=load();renderAll();}});
 renderAll();
 route();
+document.addEventListener('keydown',e=>{if(e.key==='Tab'||e.key.indexOf('Arrow')===0)document.documentElement.dataset.kb='1';});
+document.addEventListener('pointerdown',()=>{delete document.documentElement.dataset.kb;});
 // A timer that finished while the page was closed is settled here and shows its result.
 updateTick(false);
+booting=false;
 })();
 </script>
