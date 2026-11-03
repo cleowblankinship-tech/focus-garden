@@ -1,0 +1,812 @@
+<title>Focus Garden</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Outfit:wght@200;300&family=Patrick+Hand&display=swap">
+<style>
+/* Layout: a quiet planter. Timer screen is one flat sage field with a cream circle; garden screen is a voxel tile on forest green with a paper panel sliding up beneath it. */
+:root{
+  --sage:#5A9E86; --forest:#2F6A55; --cream:#F2EBC9; --paper:#F1F4F0; --ink:#2A3B31; --muted:#6B776A; --line:#DCE4DE;
+  --soil:#7B4E2C; --soil-d:#573419; --disc:#F2EBC9;
+  --c-new:#4C9A78; --c-review:#D1A03E; --c-practice:#BC6A45;
+  --bloom:#B97A14; --wither:#8A7550; --danger:#A9442F; --danger-soft:#F2DDD3;
+  --font-body:'Nunito','Segoe UI',system-ui,-apple-system,sans-serif;
+  --font-time:'Outfit','Avenir Next','Helvetica Neue',system-ui,sans-serif;
+  --font-hand:'Patrick Hand','Segoe Print','Bradley Hand',cursive;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background-color:var(--sage);background-image:radial-gradient(130% 90% at 50% 42%,rgba(0,0,0,0) 58%,rgba(20,60,45,.2) 100%);background-attachment:fixed;color:var(--ink);font:400 16px/1.45 var(--font-body)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--cream);outline-offset:3px}
+.panel :focus-visible,.modal :focus-visible{outline-color:var(--forest)}
+h1,h2,h3{font-family:var(--font-body);margin:0;line-height:1.15;text-wrap:balance}
+p{margin:0}
+.pad{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.hint{color:var(--muted);font-size:.9rem}
+.hand{font-family:var(--font-hand);font-weight:400;font-size:1.6rem;color:var(--forest)}
+
+/* ---- timer screen ---- */
+.fwrap{min-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;justify-content:center;position:relative}
+.fwrap .hdr{position:absolute;top:0;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px))}
+.hdr{display:flex;align-items:center;justify-content:space-between;min-height:62px;padding-top:8px}
+.title{margin:0;font:400 1.75rem/1 var(--font-hand);color:var(--cream);display:flex;align-items:center;gap:8px}
+.title svg{width:22px;height:22px}
+.rbtn{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:rgba(242,235,201,.16);border:1.5px solid rgba(242,235,201,.5);color:var(--cream);text-decoration:none}
+.rbtn:hover{background:rgba(242,235,201,.26)}
+.rbtn svg{width:24px;height:24px}
+.focus{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:68px 0;text-align:center}
+.say{color:var(--cream);font-weight:700;letter-spacing:.02em;min-height:1.5em}
+.disc{width:min(72vw,300px);aspect-ratio:1;flex:none;border-radius:50%;background:var(--disc);overflow:hidden;display:flex;justify-content:center;align-items:flex-end;box-shadow:0 14px 34px rgba(20,60,45,.2)}
+.disc svg{height:100%;width:100%;display:block;transform-origin:50% 100%}
+.tpill{display:inline-flex;align-items:center;gap:10px;min-height:40px;padding:6px 16px;border-radius:999px;border:1.5px solid rgba(242,235,201,.55);background:rgba(242,235,201,.1);color:var(--cream);font-weight:700}
+button.tpill::after{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px)}
+.time{font-family:var(--font-time);font-weight:300;font-size:clamp(5.2rem,30vw,9.5rem);line-height:1;display:flex;justify-content:center;color:var(--cream);opacity:.88}
+.time .d{display:inline-block;width:.58em;text-align:center}
+.time .c{display:inline-block;width:.3em;text-align:center}
+.ctl{display:flex;flex-direction:column;align-items:center;gap:6px}
+.ctl .row{display:flex;gap:6px}
+.pillbtn{min-width:220px;min-height:62px;border-radius:999px;border:none;background:var(--cream);color:var(--forest);font:800 1.2rem var(--font-body);box-shadow:0 5px 0 rgba(30,85,62,.28);transition:transform .12s,box-shadow .12s}
+.pillbtn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(30,85,62,.28)}
+button.giveup{color:#5B2819;text-decoration:none;font-size:.9rem;font-weight:800;margin-left:8px;opacity:1}
+.quiet{background:none;border:none;color:var(--cream);font-weight:700;min-height:46px;padding:0 14px;text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgba(242,235,201,.5)}
+
+/* ---- garden screen ---- */
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;padding:3px;border-radius:999px;background:rgba(0,0,0,.2);max-width:360px;margin:6px auto 0}
+.seg button{border:none;background:none;color:var(--cream);padding:8px 0;border-radius:999px;font-weight:700;min-height:38px}
+.seg button[aria-pressed="true"]{background:var(--cream);color:var(--forest)}
+.rnav{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--cream);font-weight:700;margin-top:6px}
+.rnav button{background:none;border:none;color:var(--cream);font-size:1.6rem;line-height:1;width:44px;height:44px;border-radius:50%}
+.rnav button:disabled{opacity:.3;cursor:default}
+.rnav span{min-width:150px;text-align:center}
+.plotbox{position:relative;max-width:540px;margin:0 auto}
+.plot{width:100%;height:auto;display:block}
+.hud{position:absolute;top:2px;right:0;display:flex;flex-direction:column;gap:5px;min-width:122px;padding:10px 14px;border-radius:18px;background:rgba(10,45,32,.3);color:var(--cream);font-size:.86rem;font-weight:700}
+.hud-t{font:400 1.1rem/1 var(--font-hand);opacity:.95;margin-bottom:2px}
+.hud-r{display:flex;align-items:center;gap:7px;font-variant-numeric:tabular-nums}
+.hud-r b{font-size:1.1rem}
+.hd{width:9px;height:9px;border-radius:50%;background:#F3C14E;flex:none}
+.hd.w{background:#C9A37A}
+.empty-note{text-align:center;color:var(--cream);opacity:.85;padding:4px 0 28px;font-weight:600}
+.panel{background:var(--paper);border-radius:30px 30px 0 0;margin-top:-6px;padding-top:26px;padding-bottom:calc(48px + env(safe-area-inset-bottom,0px));min-height:62dvh;box-shadow:0 -10px 30px rgba(10,40,28,.18)}
+.panel .pad{display:flex;flex-direction:column;gap:12px}
+.panel section{display:flex;flex-direction:column;gap:12px;padding-bottom:20px}
+.chart{width:100%;height:auto;display:block}
+.chart text{font:600 9.5px var(--font-body);fill:var(--muted)}
+.goalrow{display:flex;align-items:center;gap:12px}
+.meter{position:relative;flex:1;height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.meter .zone{position:absolute;top:0;bottom:0;right:0;background:repeating-linear-gradient(135deg,rgba(185,122,20,.26) 0 3px,transparent 3px 7px)}
+.meter .fill{position:absolute;inset:0 auto 0 0;border-radius:99px;background:var(--sage)}
+.meter .fill.hit{background:var(--bloom)}
+.glabel{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.devrow{display:flex;align-items:center;justify-content:space-between;gap:14px;border-top:1px solid var(--line);padding-top:16px}
+.fine{color:var(--muted);font-size:.82rem}
+.devrow b{display:block;font-size:.95rem}
+.sw{flex:none;width:50px;height:30px;border-radius:99px;border:none;background:#C5D1C9;position:relative;padding:0;transition:background .2s}
+.sw i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.sw[aria-checked="true"]{background:var(--forest)}
+.sw[aria-checked="true"] i{transform:translateX(20px)}
+.split-row{display:flex;flex-direction:column;gap:6px}
+.split-row .l{display:flex;justify-content:space-between;gap:10px;font-weight:700;font-variant-numeric:tabular-nums}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--gc,var(--muted));flex:none;display:inline-block;margin-right:8px}
+.sbar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.sbar i{display:block;height:100%;background:var(--gc);border-radius:99px}
+.sec-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.list{list-style:none;margin:0;padding:0}
+.row-item{position:relative;display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
+.row-btn{flex:1;min-width:0;display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center;text-align:left;background:none;border:none;padding:14px 0;border-radius:12px}
+.row-btn:hover .ri-name{text-decoration:underline;text-underline-offset:3px}
+.thumb{width:48px;height:48px;border-radius:50%;background:var(--disc);overflow:hidden;display:flex;justify-content:center;flex:none}
+.thumb svg{height:100%;width:100%}
+.ri-main{min-width:0;display:flex;flex-direction:column;gap:2px}
+.ri-name{font-weight:800;font-size:1.02rem}
+.ri-meta{color:var(--muted);font-size:.88rem;font-variant-numeric:tabular-nums}
+.ri-note{color:var(--muted);font-style:italic;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more{align-self:center;flex:none;width:44px;height:44px;border-radius:50%;border:none;background:none;color:var(--muted);font-size:1.5rem;line-height:1;letter-spacing:1px;padding-bottom:6px}
+.more:hover,.more[aria-expanded="true"]{background:rgba(47,106,85,.1);color:var(--forest)}
+.menu{position:absolute;right:0;top:calc(50% + 18px);z-index:4;min-width:140px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:4px;box-shadow:0 8px 24px rgba(20,50,35,.18);display:flex;flex-direction:column}
+.menu button{background:none;border:none;text-align:left;padding:10px 14px;border-radius:10px;font-weight:700;min-height:44px}
+.menu button:hover{background:#EAF0EC}
+.menu .del{color:var(--danger)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---- buttons, sheets, forms (paper surfaces) ---- */
+.btn{min-height:48px;border-radius:999px;border:1.5px solid #C5D1C9;background:transparent;color:var(--ink);padding:0 20px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--forest);border-color:var(--forest);color:var(--cream)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn.ghost-danger{color:var(--danger);border-color:#E3B7A8}
+.btn.small{min-height:38px;padding:0 16px;font-size:.88rem}
+.scrim{position:fixed;inset:0;z-index:20;background:rgba(14,40,30,.55);display:grid;place-items:center;padding:16px;overflow:auto}
+.modal{background:var(--paper);color:var(--ink);border-radius:26px;width:100%;max-width:440px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 50px rgba(0,0,0,.3);max-height:calc(100% - 8px);overflow:auto}
+.modal h2{font-family:var(--font-hand);font-weight:400;font-size:1.75rem;color:var(--forest)}
+.modal h3{font-size:1rem}
+.modal .btns{display:grid;gap:10px}
+.modal .btns.two{grid-template-columns:1fr 1fr}
+.res-flower{width:200px;aspect-ratio:1;margin:0 auto;display:flex;justify-content:center;border-radius:50%;background:var(--disc);overflow:hidden;flex:none}
+.res-flower svg{height:100%;width:100%}
+.group-h{display:flex;align-items:center;font:400 1.35rem/1 var(--font-hand);color:var(--forest);margin-bottom:8px}
+.topics{display:grid;grid-template-columns:1fr;gap:8px}
+.topic{display:flex;align-items:center;gap:8px;text-align:left;padding:5px 10px 5px 5px;min-height:54px;border-radius:999px;border:1.5px solid var(--line);background:#F9FBF8;font-weight:700;line-height:1.15;min-width:0}
+.topic .thumb{width:42px;height:42px}
+.topic[aria-pressed="true"]{border-color:var(--forest);background:#E1EDD7;box-shadow:inset 0 0 0 1px var(--forest)}
+.lens{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.len{padding:10px 0;border-radius:18px;border:1.5px solid var(--line);background:#F9FBF8;font-weight:700;text-align:center;line-height:1.1}
+.len b{display:block;font:800 1.5rem/1 var(--font-body)}
+.len small{color:var(--muted);font-weight:700}
+.len[aria-pressed="true"]{border-color:var(--forest);background:#E1EDD7;box-shadow:inset 0 0 0 1px var(--forest)}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-weight:800;font-size:.9rem}
+.field input,.field select,.field textarea{border:1.5px solid var(--line);background:#F9FBF8;border-radius:14px;padding:10px 12px;min-height:46px;width:100%}
+.field textarea{min-height:84px;resize:vertical}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.err{color:var(--danger);font-weight:700;font-size:.9rem}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;background:var(--ink);color:var(--cream);padding:10px 18px;border-radius:999px;font-weight:700;max-width:calc(100% - 32px);text-align:center}
+
+@media (prefers-reduced-motion: no-preference){
+  .alive .sway{animation:sway 5s ease-in-out infinite;transform-origin:100px 236px}
+  @keyframes sway{0%,100%{transform:rotate(-1.3deg)}50%{transform:rotate(1.3deg)}}
+  .disc svg.pop{animation:pop .8s cubic-bezier(.3,1.6,.5,1)}
+  @keyframes pop{0%{transform:scale(.93)}100%{transform:none}}
+  .res-flower.bounce{animation:bounce 1s ease-out .15s}
+  @keyframes bounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-16px)}55%{transform:translateY(0)}75%{transform:translateY(-6px)}}
+}
+</style>
+
+<main>
+  <section id="view-focus" aria-label="Focus"></section>
+  <section id="view-garden" aria-label="Garden" hidden></section>
+</main>
+<div id="modal-root" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- constants ---------- */
+const GOAL_H=12, STRETCH_H=15, MIN_LOG_SECS=30;
+const GROUPS={
+  new:{name:'New learning',color:'var(--c-new)'},
+  review:{name:'Review',color:'var(--c-review)'},
+  practice:{name:'Practice',color:'var(--c-practice)'}
+};
+const TOPICS=[
+  {id:'retirement',name:'Retirement',group:'new',flower:'sunflower'},
+  {id:'estate',name:'Estate',group:'new',flower:'iris'},
+  {id:'capstone',name:'Capstone',group:'new',flower:'rose'},
+  {id:'fundamentals',name:'Fundamentals / Insurance',group:'review',flower:'daisy'},
+  {id:'tax',name:'Tax',group:'review',flower:'tulip'},
+  {id:'investments',name:'Investments',group:'review',flower:'lavender'},
+  {id:'practice',name:'Practice Questions',group:'practice',flower:'poppy'}
+];
+const TOPIC=Object.fromEntries(TOPICS.map(t=>[t.id,t]));
+const FLOWER_NAME={sunflower:'Sunflower',iris:'Iris',rose:'Rose',daisy:'Daisy',tulip:'Tulip',lavender:'Lavender',poppy:'Poppy'};
+const TIERS={
+  25:{ti:0,layers:1,leaves:2,scale:.8,extras:0,desc:'Simple single bloom'},
+  45:{ti:1,layers:2,leaves:4,scale:.95,extras:0,desc:'Fuller bloom with more leaves'},
+  60:{ti:2,layers:3,leaves:4,scale:1.08,extras:1,desc:'Rich bloom with a side blossom'},
+  90:{ti:3,layers:4,leaves:6,scale:1.2,extras:2,desc:'Grand bloom with two side blossoms'}
+};
+const TIER_LIST=[25,45,60,90];
+
+/* ---------- storage (try/catch, memory fallback) ---------- */
+const LS_KEY='focusGarden.v1';
+let mem=null;
+function load(){
+  let s=null;
+  try{const r=localStorage.getItem(LS_KEY);if(r)s=JSON.parse(r);}catch(e){}
+  if(!s&&mem)s=mem;
+  s=s&&typeof s==='object'?s:{};
+  if(!Array.isArray(s.sessions))s.sessions=[];
+  if(!s.prefs)s.prefs={topic:'retirement',tier:45};
+  if(!TOPIC[s.prefs.topic])s.prefs.topic='retirement';
+  if(!TIERS[s.prefs.tier])s.prefs.tier=45;
+  if(!s.timer)s.timer=null;
+  return s;
+}
+let state=load();
+function save(){mem=state;try{localStorage.setItem(LS_KEY,JSON.stringify(state));}catch(e){}}
+
+/* ---------- small utils ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function fmtClock(ms){const s=Math.max(0,Math.ceil(ms/1000));return pad(Math.floor(s/60))+':'+pad(s%60);}
+function fmtDur(secs){
+  secs=Math.max(0,Math.round(secs));
+  const h=Math.floor(secs/3600),m=Math.floor(secs%3600/60);
+  if(h)return h+'h '+pad(m)+'m';
+  if(m)return m+' min';
+  return secs+' sec';
+}
+function fmtHM(secs){
+  const tm=Math.floor(secs/60),h=Math.floor(tm/60),m=tm%60;
+  return h?h+'h '+pad(m)+'m':m+'m';
+}
+function fmtDate(ts){return new Date(ts).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});}
+function fmtTime(ts){return new Date(ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});}
+function weekStart(d){const x=new Date(d);const k=(x.getDay()+6)%7;return new Date(x.getFullYear(),x.getMonth(),x.getDate()-k).getTime();}
+function weekBounds(now=Date.now()){const s=weekStart(now);const e=new Date(s);e.setDate(e.getDate()+7);return [s,e.getTime()];}
+function dateInputVal(ts){const d=new Date(ts);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function tierForMinutes(m){return m<35?25:m<52?45:m<75?60:90;}
+function stageOf(p){return p<.12?'sprout':p<.45?'growing':p<1?'budding':'bloomed';}
+const STAGE_LABEL={sprout:'Sprout',growing:'Growing',budding:'Budding',bloomed:'Bloomed',withered:'Withered'};
+
+let toastTimer;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.hidden=true;},3600);}
+
+/* ---------- flower art (original, drawn in code) ---------- */
+const FL={
+  sunflower:{petal:'#F5B91E',petal2:'#E08A12',center:'#5B3A1D',center2:'#8A5A2B',leaf:1.2,ly:1},
+  iris:{petal:'#6A4CC2',petal2:'#9C86E8',center:'#F2C94C',center2:'#F2C94C',leaf:1,ly:.8},
+  rose:{petal:'#D6336C',petal2:'#A31F4C',center:'#7E123A',center2:'#7E123A',leaf:1,ly:1},
+  daisy:{petal:'#FFFFFF',petal2:'#E2EAF1',center:'#F4B72C',center2:'#D99A14',leaf:.9,ly:.8},
+  tulip:{petal:'#F0683A',petal2:'#D2441F',center:'#F0683A',center2:'#F0683A',leaf:1.15,ly:.7,lift:16},
+  lavender:{petal:'#A184DA',petal2:'#7C5CBE',center:'#7C5CBE',center2:'#7C5CBE',leaf:.8,ly:.5,thin:1},
+  poppy:{petal:'#E8392B',petal2:'#C22216',center:'#2B2024',center2:'#2B2024',leaf:.95,ly:.9}
+};
+const WITHER={petal:'#BBA578',petal2:'#927C57',center:'#5E4B35',center2:'#7A6446'};
+const LEAF='#4E8F45', LEAF_D='#3E7538', LEAF_W='#8E8055', STEM='#4A8A41', STEM_W='#8B7C52';
+const OUT='stroke="rgba(30,20,10,.22)" stroke-width=".9"';
+const E=(cx,cy,rx,ry,fill,x='')=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" ${x}/>`;
+const C=(cx,cy,r,fill,x='')=>`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" ${x}/>`;
+const ring=(n,off,fn)=>{let o='';for(let i=0;i<n;i++)o+=`<g transform="rotate(${(off+i*360/n).toFixed(2)})">${fn(i)}</g>`;return o;};
+const POINT='M0 0 C-11 -12 -10 -30 0 -42 C10 -30 11 -12 0 0Z';
+
+const HEADS={
+  sunflower(c,L){
+    let o=ring(12,0,()=>E(0,-28,5.8,15,c.petal2,OUT));
+    if(L>=2)o+=ring(12,15,()=>E(0,-27,5.8,14,c.petal,OUT));
+    if(L>=3)o+=ring(12,7.5,()=>E(0,-22,4.8,11,c.petal,OUT));
+    o+=C(0,0,15,c.center);
+    const n=16+L*10;
+    for(let i=1;i<=n;i++){const r=Math.sqrt(i/n)*13,a=i*2.39996;o+=C((Math.cos(a)*r).toFixed(1),(Math.sin(a)*r).toFixed(1),1.1,c.center2);}
+    return o;
+  },
+  iris(c,L){
+    let o='';
+    for(let k=L-1;k>=0;k--){
+      const sc=1-k*.14,off=k*30;
+      o+=ring(3,off+60,()=>`<g transform="scale(${sc})"><path d="${POINT}" fill="${c.petal2}" ${OUT}/></g>`);
+      o+=ring(3,off,()=>`<g transform="scale(${(sc*.88).toFixed(2)})"><path d="${POINT}" fill="${c.petal}" ${OUT}/></g>`);
+    }
+    o+=ring(3,60,()=>E(0,-12,2.6,7,c.center,'opacity=".95"'));
+    o+=C(0,0,4,c.center2);
+    return o;
+  },
+  rose(c,L){
+    const rings=[[7,24,15,c.petal2],[6,18,14,c.petal],[5,12,12,c.petal2],[5,7,9,c.petal],[4,3,7,c.petal2]];
+    let o='';
+    rings.slice(-(L+1)).forEach(([n,d,r,fill],i)=>{o+=ring(n,i*17,()=>C(0,-d,r,fill,OUT));});
+    o+=C(0,0,6,c.petal,OUT);
+    o+=`<path d="M-4 2 C-5 -6 6 -6 6 1 C6 7 -2 8 -3 3" fill="none" stroke="rgba(60,0,20,.45)" stroke-width="1.5" stroke-linecap="round"/>`;
+    return o;
+  },
+  daisy(c,L){
+    let o='';
+    for(let k=L-1;k>=0;k--)o+=ring(14+k*2,k*6,()=>E(0,-(25-k*2.5),4.2,16-k*1.5,k%2?c.petal2:c.petal,OUT));
+    o+=C(0,0,10,c.center,OUT);
+    for(let i=0;i<7;i++){const a=i*.9;o+=C((Math.cos(a)*4.5*(i%2?1:.6)).toFixed(1),(Math.sin(a)*4.5*(i%2?1:.6)).toFixed(1),1.4,c.center2);}
+    return o;
+  },
+  tulip(c,L){
+    let o='';
+    for(let k=L-1;k>=1;k--){
+      o+=`<g transform="rotate(${-k*13} 0 16)"><path d="M0 18 C-15 12 -13 -22 0 -38 C13 -22 15 12 0 18 Z" fill="${c.petal2}" ${OUT}/></g>`;
+      o+=`<g transform="rotate(${k*13} 0 16)"><path d="M0 18 C-15 12 -13 -22 0 -38 C13 -22 15 12 0 18 Z" fill="${c.petal2}" ${OUT}/></g>`;
+    }
+    o+=`<path d="M0 16 C-22 14 -24 -10 -17 -32 C-9 -22 -3 -8 0 16 Z" fill="${c.petal2}" ${OUT}/>`;
+    o+=`<path d="M0 16 C22 14 24 -10 17 -32 C9 -22 3 -8 0 16 Z" fill="${c.petal2}" ${OUT}/>`;
+    o+=`<path d="M0 18 C-15 12 -13 -22 0 -40 C13 -22 15 12 0 18 Z" fill="${c.petal}" ${OUT}/>`;
+    o+=`<path d="M0 14 C-4 0 -4 -18 0 -32" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2.5" stroke-linecap="round"/>`;
+    return o;
+  },
+  lavender(c,L){
+    const n=4+L*2;let o='';
+    for(let i=n-1;i>=0;i--){
+      const y=-i*5.6-2,w=1-i/(n*1.6),fill=i%2?c.petal:c.petal2;
+      o+=`<g transform="translate(${(-4.6*w).toFixed(1)} ${y}) rotate(-22)">${E(0,0,3.3,5.4,fill,OUT)}</g>`;
+      o+=`<g transform="translate(${(4.6*w).toFixed(1)} ${y}) rotate(22)">${E(0,0,3.3,5.4,fill,OUT)}</g>`;
+    }
+    o+=E(0,-n*5.6-4,3,5.4,c.petal,OUT);
+    return o;
+  },
+  poppy(c,L){
+    let o='';
+    const sets=[[45,1,c.petal2],[0,.9,c.petal],[45,.72,c.petal2],[0,.58,c.petal]];
+    for(let k=0;k<L;k++){const [off,s,fill]=sets[k];o+=ring(4,off,()=>`<g transform="scale(${s})">${E(0,-15,19,18,fill,OUT)}${k===0?E(0,-3,5,3.4,c.center,'opacity=".75"'):''}</g>`);}
+    o+=C(0,0,7.5,c.center);
+    o+=ring(14,0,()=>`<path d="M0 -7 L0 -13" stroke="${c.center}" stroke-width="1.2"/>`+C(0,-14,1.5,c.center));
+    return o;
+  }
+};
+function buddy(f,c,s){ // closed bud drawn at origin, growing up
+  let o='';
+  if(f==='lavender'){
+    o+=`<path d="M0 0 L0 -24" stroke="${LEAF}" stroke-width="3" stroke-linecap="round"/>`;
+    for(let i=0;i<4;i++)o+=E(i%2?2.5:-2.5,-6-i*5,2.6,3.6,c.petal||FL[f].petal);
+    return `<g transform="scale(${s})">${o}</g>`;
+  }
+  if(f==='sunflower'){
+    o+=ring(10,0,()=>E(0,-12,2.6,6,c.petal||FL[f].petal));
+    o+=C(0,0,12,'#5C9A4E');
+    o+=C(0,0,7,'#6DAE5C');
+    return `<g transform="scale(${s})">${o}</g>`;
+  }
+  const col=c.petal2||FL[f].petal2, col2=c.petal||FL[f].petal;
+  o+=E(0,-9,8.5,13,col,OUT)+E(0,-11,4,9,col2,'opacity=".8"');
+  o+=`<path d="M-9 -2 C-9 8 9 8 9 -2 C6 2 -6 2 -9 -2Z" fill="${LEAF}"/>`;
+  o+=`<path d="M-8 0 C-12 -8 -9 -14 -4 -16" fill="none" stroke="${LEAF}" stroke-width="2.4" stroke-linecap="round"/>`;
+  o+=`<path d="M8 0 C12 -8 9 -14 4 -16" fill="none" stroke="${LEAF}" stroke-width="2.4" stroke-linecap="round"/>`;
+  return `<g transform="scale(${s})">${o}</g>`;
+}
+function leaf(x,y,side,s,ly,wil){
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${(side*s).toFixed(3)} ${(s*ly).toFixed(3)}) rotate(${wil?34:-28})"><path d="M0 0 C10 -10 28 -12 40 -2 C28 8 10 8 0 0Z" fill="${wil?LEAF_W:LEAF}"/><path d="M2 0 L34 -2" stroke="rgba(0,0,0,.2)" stroke-width="1.2" fill="none"/></g>`;
+}
+function headAt(fkey,c,x,y,s,L,rotate=0){
+  const lift=FL[fkey].lift||0;
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rotate}) scale(${s.toFixed(3)}) translate(0 ${-lift})">${HEADS[fkey](c,L)}</g>`;
+}
+function ground(){return `<path d="M16 236 L184 236 C178 264 146 282 100 282 C54 282 22 264 16 236Z" style="fill:var(--soil)"/><path d="M30 246 C40 262 62 272 84 275" fill="none" stroke="rgba(255,235,200,.22)" stroke-width="3" stroke-linecap="round"/><ellipse cx="100" cy="236" rx="84" ry="11" style="fill:var(--soil-d)"/>`;}
+function flowerSVG(fkey,tier,stage,p){
+  p=p==null?1:p;
+  const T=TIERS[tier]||TIERS[45],f=FL[fkey],wil=stage==='withered';
+  const c=wil?WITHER:f, full=88+T.ti*12, S=.76, bx=100, by=236;
+  let H;
+  if(wil)H=full*.9;
+  else if(stage==='sprout')H=30+24*clamp(p/.12);
+  else if(stage==='growing')H=full*(.35+.45*clamp((p-.12)/.33));
+  else if(stage==='budding')H=full*(.8+.2*clamp((p-.45)/.55));
+  else H=full;
+  const topY=by-H, sw=f.thin?3.6:5+T.ti*.6;
+  let s=`<svg viewBox="-8 92 216 216" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(FLOWER_NAME[fkey])}, ${esc(STAGE_LABEL[stage])}">`;
+  s+=ground();
+  if(wil){ // fallen petals on the soil
+    [[72,236,-20],[130,237,15],[92,239,40],[148,235,-30]].forEach(([x,y,r])=>{s+=`<g transform="rotate(${r} ${x} ${y})">${E(x,y,6,2.6,WITHER.petal2)}</g>`;});
+  }
+  s+=`<g class="sway"><g transform="translate(100 236) scale(${S}) translate(-100 -236)">`;
+  let ex=bx,ey=topY;
+  // stem
+  if(wil){
+    ex=128;ey=by-H*.92;
+    s+=`<path d="M${bx} ${by} C${bx} ${by-H*.6} ${bx+4} ${by-H*1.0} ${ex} ${ey}" fill="none" stroke="${STEM_W}" stroke-width="${sw}" stroke-linecap="round"/>`;
+  }else{
+    s+=`<path d="M${bx} ${by} C${bx-4} ${by-H*.35} ${bx+4} ${by-H*.7} ${bx} ${topY}" fill="none" stroke="${STEM}" stroke-width="${sw}" stroke-linecap="round"/>`;
+  }
+  // leaves
+  if(stage==='sprout'){
+    s+=leaf(bx,topY+6,1,.5,1,false)+leaf(bx,topY+6,-1,.5,1,false);
+  }else{
+    const n=wil?T.leaves:(stage==='growing'?Math.max(2,Math.round(T.leaves*H/full)):T.leaves);
+    const ls=(.5+.5*H/full)*f.leaf*(wil?.9:1);
+    for(let i=0;i<n;i++){
+      const y=by-H*(.14+.46*(i/Math.max(1,n-1)));
+      s+=leaf(bx,y,i%2?-1:1,ls,f.ly,wil);
+    }
+  }
+  // side blossoms
+  if(!wil&&(stage==='budding'||stage==='bloomed')&&T.extras){
+    for(let i=0;i<T.extras;i++){
+      const side=T.extras===1?1:(i?1:-1), y0=by-H*(.5+.07*i), tx=bx+side*40, ty=y0-34;
+      s+=`<path d="M${bx} ${y0} Q${bx+side*8} ${ty+8} ${tx} ${ty}" fill="none" stroke="${STEM}" stroke-width="2.6" stroke-linecap="round"/>`;
+      s+=stage==='bloomed'?headAt(fkey,f,tx,ty,.5,1):`<g transform="translate(${tx} ${ty})">${buddy(fkey,f,.6)}</g>`;
+    }
+  }
+  // head
+  if(wil)s+=headAt(fkey,WITHER,ex,ey,T.scale*.85,Math.min(T.layers,2),128);
+  else if(stage==='sprout'){/* just a sprout */}
+  else if(stage==='growing')s+=`<g transform="translate(${bx} ${topY})">${E(0,-5,4+3*clamp((p-.12)/.33),7+4*clamp((p-.12)/.33),LEAF_D)}</g>`;
+  else if(stage==='budding')s+=`<g transform="translate(${bx} ${topY})">${buddy(fkey,f,T.scale*(.85+.35*clamp((p-.45)/.55)))}</g>`;
+  else s+=headAt(fkey,f,bx,topY,T.scale,T.layers);
+  s+=`</g></g></svg>`;
+  return s;
+}
+function iconSVG(fkey,wil){
+  const adj={lavender:[0,26,1],tulip:[0,10,1],sunflower:[0,0,.95],iris:[0,0,.95]}[fkey]||[0,0,1];
+  return `<svg viewBox="-48 -50 96 96" aria-hidden="true"><g transform="translate(${adj[0]} ${adj[1]}) scale(${adj[2]})">${HEADS[fkey](wil?WITHER:FL[fkey],2)}</g></svg>`;
+}
+function miniSVG(fkey,tier,status){return flowerSVG(fkey,tier,status,1);}
+
+/* ---------- timer logic ---------- */
+function focusedMs(t,now){
+  now=now==null?Date.now():now;
+  let ms=t.accMs+(t.resumedAt!=null?Math.max(0,now-t.resumedAt):0);
+  return clamp(ms,0,t.plannedMs);
+}
+function startTimer(){
+  const tier=state.prefs.tier,now=Date.now();
+  state.timer={topic:state.prefs.topic,tier,plannedMs:tier*60000,accMs:0,resumedAt:now,startedAt:now};
+  save();renderFocus();requestWake();
+}
+function pauseTimer(){
+  const t=state.timer;if(!t||t.resumedAt==null)return;
+  t.accMs=focusedMs(t);t.resumedAt=null;save();renderFocus();
+}
+function resumeTimer(){
+  const t=state.timer;if(!t||t.resumedAt!=null)return;
+  t.resumedAt=Date.now();save();renderFocus();requestWake();
+}
+function endTimer(bloomed){
+  const t=state.timer;if(!t)return;
+  const now=Date.now();
+  let secs=Math.floor(focusedMs(t,now)/1000),at=now;
+  if(bloomed){
+    secs=Math.round(t.plannedMs/1000);
+    if(t.resumedAt!=null)at=Math.min(now,t.resumedAt+(t.plannedMs-t.accMs));
+  }
+  state.timer=null;
+  let session=null;
+  if(secs>=MIN_LOG_SECS){
+    session={id:uid(),topic:t.topic,tier:t.tier,secs,status:bloomed?'bloomed':'withered',at,note:'',manual:false};
+    state.sessions.push(session);
+  }
+  save();
+  closeModal(true);
+  renderAll();
+  if(session)showResult(session);
+  else toast('Under 30 seconds, so nothing was logged.');
+}
+let wakeLock=null;
+function requestWake(){try{if(navigator.wakeLock&&document.visibilityState==='visible'&&!wakeLock){navigator.wakeLock.request('screen').then(w=>{wakeLock=w;w.addEventListener('release',()=>{wakeLock=null;});}).catch(()=>{});}}catch(e){}}
+
+/* ---------- derived stats ---------- */
+function weekSessions(now){const [a,b]=weekBounds(now);return state.sessions.filter(s=>s.at>=a&&s.at<b);}
+function weekTotals(now){
+  const list=weekSessions(now),by={new:0,review:0,practice:0};let total=0,bloomed=0,withered=0;
+  list.forEach(s=>{const g=(TOPIC[s.topic]||{group:'new'}).group;by[g]+=s.secs;total+=s.secs;s.status==='bloomed'?bloomed++:withered++;});
+  return {list,by,total,bloomed,withered};
+}
+
+/* ---------- Focus view ---------- */
+let lastKey='',lastStage='';
+function renderFocus(){
+  const el=$('#view-focus'),t=state.timer,running=t&&t.resumedAt!=null;
+  let ctl;
+  if(!t)ctl=`<button class="pillbtn" data-act="start" id="btn-start">Plant</button>`;
+  else ctl=`<button class="pillbtn" data-act="${running?'pause':'resume'}" id="${running?'btn-pause':'btn-resume'}">${running?'Pause':'Resume'}</button>
+    <div class="row"><button class="quiet" data-act="stop" id="btn-stop">Stop early</button><button class="quiet giveup" data-act="giveup" id="btn-giveup">Give up</button></div>`;
+  el.innerHTML=`<div class="pad fwrap">
+    <header class="hdr"><h1 class="title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14V9"/><path d="M12 10c-3.5 0-4.5-2.5-4.5-5 3.5 0 4.5 2 4.5 5zM12 10c3.5 0 4.5-2.5 4.5-5-3.5 0-4.5 2-4.5 5z"/><path d="M3 18l9 4 9-4-9-4z"/></svg>Focus Garden</h1><a class="rbtn" href="#garden" id="link-garden" aria-label="Open garden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14V9"/><path d="M12 10c-3.5 0-4.5-2.5-4.5-5 3.5 0 4.5 2 4.5 5zM12 10c3.5 0 4.5-2.5 4.5-5-3.5 0-4.5 2-4.5 5z"/><path d="M3 18l9 4 9-4-9-4z"/></svg></a></header>
+    <div class="focus ${running?'alive':''}" id="stage">
+      <p class="say" id="say"></p>
+      <div class="disc" id="flower"></div>
+      ${t?'<p class="tpill" id="tpill"></p>':'<button class="tpill" id="btn-topic" data-act="sheet" aria-label="Choose topic and length"></button>'}
+      <div class="time" id="time" role="timer">00:00</div>
+      <div class="ctl">${ctl}</div>
+    </div></div>`;
+  lastKey='';lastStage='';
+  updateTick(true);
+}
+function updateTick(force){
+  const t=state.timer;
+  if(t&&t.resumedAt!=null&&focusedMs(t)>=t.plannedMs){endTimer(true);return;}
+  const timeEl=$('#time');if(!timeEl)return;
+  let p,remaining,stage,topic,tier;
+  if(t){const f=focusedMs(t);p=f/t.plannedMs;remaining=t.plannedMs-f;stage=stageOf(p);topic=TOPIC[t.topic];tier=t.tier;}
+  else{p=.06;remaining=state.prefs.tier*60000;stage='sprout';topic=TOPIC[state.prefs.topic];tier=state.prefs.tier;}
+  const clock=fmtClock(remaining);
+  if(timeEl.dataset.v!==clock){timeEl.dataset.v=clock;timeEl.setAttribute('aria-label','Time remaining '+clock);timeEl.innerHTML=clock.split('').map(ch=>ch===':'?'<span class="c">:</span>':'<span class="d">'+ch+'</span>').join('');}
+  const key=[topic.id,tier,stage,Math.floor(p*400)].join(':');
+  if(force||key!==lastKey){
+    const fl=$('#flower');fl.innerHTML=flowerSVG(topic.flower,tier,stage,p);lastKey=key;
+    if(lastStage&&lastStage!==stage){const sv=fl.firstChild;if(sv)sv.classList.add('pop');}
+    lastStage=stage;fl.dataset.stage=stage;
+  }
+  $('#say').textContent=!t?'Ready to plant':(t.resumedAt!=null?STAGE_LABEL[stage]+' · stay focused':'Paused · your flower is safe');
+  const pill=$('#tpill')||$('#btn-topic');if(pill)pill.textContent=`${topic.name} · ${tier} min`;
+  document.title=t?`${clock} · Focus Garden`:'Focus Garden';
+}
+function openSheet(){
+  openModal(`<h2>Choose your flower</h2>
+    ${Object.entries(GROUPS).map(([g,info])=>`<div><div class="group-h"><span class="dot" style="--gc:${info.color}"></span>${info.name}</div><div class="topics">${TOPICS.filter(t=>t.group===g).map(t=>`<button class="topic" data-act="topic" data-id="${t.id}" aria-pressed="${state.prefs.topic===t.id}"><span class="thumb">${iconSVG(t.flower)}</span><span>${esc(t.name)}<br><span class="hint">${FLOWER_NAME[t.flower]}</span></span></button>`).join('')}</div></div>`).join('')}
+    <div><h3 style="margin-bottom:8px">How long will you focus?</h3><div class="lens">${TIER_LIST.map(m=>`<button class="len" data-act="tier" data-m="${m}" aria-pressed="${state.prefs.tier===m}"><b>${m}</b><small>min</small></button>`).join('')}</div>
+    <p class="hint" id="tier-desc" style="margin-top:8px">${TIERS[state.prefs.tier].desc}. Longer sessions grow bigger, fuller flowers.</p></div>
+    <button class="btn primary" data-act="close" id="btn-done" data-autofocus>Done</button>`,()=>closeModal());
+}
+
+/* ---------- modals ---------- */
+let modalEsc=null,lastFocus=null;
+function openModal(html,onEsc){
+  lastFocus=document.activeElement;
+  const root=$('#modal-root');
+  root.innerHTML=`<div class="scrim"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
+  root.hidden=false;modalEsc=onEsc||null;
+  const af=root.querySelector('[data-autofocus]')||root.querySelector('button,input,select,textarea');
+  if(af)af.focus();
+}
+function closeModal(noRestore){
+  const root=$('#modal-root');root.hidden=true;root.innerHTML='';modalEsc=null;
+  if(!noRestore&&lastFocus&&lastFocus.focus&&document.contains(lastFocus))lastFocus.focus();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal-root').hidden&&modalEsc)modalEsc();});
+
+function askWither(kind){
+  const t=state.timer;if(!t)return;
+  const wasRunning=t.resumedAt!=null;
+  if(wasRunning)pauseTimer(); // time spent reading the warning is not focused time
+  const f=Math.floor(focusedMs(t)/1000);
+  const keep=()=>{closeModal();if(wasRunning)resumeTimer();};
+  const give=kind==='giveup';
+  openModal(`<h2 id="warn-title">${give?'Give up and let this flower wither?':'Stop now and this flower withers'}</h2>
+    <p>You have focused for <b>${fmtDur(f)}</b> of ${t.tier} min on ${esc(TOPIC[t.topic].name)}. ${f<MIN_LOG_SECS?'Under 30 seconds is not logged.':(give?'The session ends here. If you only need a break, keep focusing and use Pause instead.':'Pausing keeps the flower alive. Ending now withers it.')}</p>
+    <div class="btns two"><button class="btn primary" data-act="keep" data-autofocus>Keep focusing</button><button class="btn danger" data-act="wither" id="btn-wither">${give?'Give up':'Wither &amp; end'}</button></div>`,keep);
+  modalKeep=keep;
+}
+let modalKeep=null;
+
+function showResult(s){
+  const topic=TOPIC[s.topic]||TOPIC.retirement,bloomed=s.status==='bloomed';
+  openModal(`<h2>${bloomed?'Your flower bloomed':'Your flower withered'}</h2>
+    <div class="res-flower ${bloomed?'bounce':''}">${flowerSVG(topic.flower,s.tier,s.status,1)}</div>
+    <p><b>${esc(topic.name)}</b> · ${bloomed?fmtDur(s.secs)+' of focus':fmtDur(s.secs)+' of '+s.tier+' min'}</p>
+    <div class="field"><label for="res-note">Hard spot to revisit (optional)</label>
+      <textarea id="res-note" placeholder="e.g. Grantor trust vs. revocable trust rules"></textarea></div>
+    <div class="btns two"><button class="btn" data-act="res-skip">Skip</button><button class="btn primary" data-act="res-save" data-id="${s.id}" data-autofocus>Save note</button></div>`,()=>closeModal());
+}
+
+function topicOptions(sel){
+  return Object.entries(GROUPS).map(([g,info])=>`<optgroup label="${info.name}">${TOPICS.filter(t=>t.group===g).map(t=>`<option value="${t.id}"${t.id===sel?' selected':''}>${esc(t.name)}</option>`).join('')}</optgroup>`).join('');
+}
+function sessionForm(id){
+  const s=id?state.sessions.find(x=>x.id===id):null;
+  const now=Date.now();
+  const v=s?{topic:s.topic,date:dateInputVal(s.at),min:Math.round(s.secs/60),status:s.status,note:s.note}:{topic:state.prefs.topic,date:dateInputVal(now),min:30,status:'bloomed',note:''};
+  openModal(`<h2>${s?'Edit session':'Add a session'}</h2>
+    ${s?'':'<p class="hint">Log time you studied without the timer.</p>'}
+    <form id="sform" data-id="${s?s.id:''}" style="display:flex;flex-direction:column;gap:12px" novalidate>
+      <div class="field"><label for="f-topic">Topic</label><select id="f-topic">${topicOptions(v.topic)}</select></div>
+      <div class="frow"><div class="field"><label for="f-date">Date</label><input id="f-date" type="date" value="${v.date}" max="${dateInputVal(now)}"></div>
+      <div class="field"><label for="f-min">Minutes focused</label><input id="f-min" type="number" min="1" max="600" step="1" inputmode="numeric" value="${v.min}"></div></div>
+      <div class="field"><label for="f-status">Result</label><select id="f-status"><option value="bloomed"${v.status==='bloomed'?' selected':''}>Bloomed</option><option value="withered"${v.status==='withered'?' selected':''}>Withered</option></select></div>
+      <div class="field"><label for="f-note">Hard spot to revisit (optional)</label><textarea id="f-note">${esc(v.note)}</textarea></div>
+      <p class="err" id="f-err" role="alert" hidden></p>
+      <div class="btns two"><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn primary" id="f-save">${s?'Save changes':'Add session'}</button></div>
+    </form>`,()=>closeModal());
+}
+function submitSession(form){
+  const id=form.dataset.id,err=$('#f-err');
+  const min=Number($('#f-min').value),date=$('#f-date').value;
+  const fail=m=>{err.textContent=m;err.hidden=false;};
+  if(!date)return fail('Choose the date you studied.');
+  if(!Number.isFinite(min)||min<1||min>600||Math.round(min)!==min)return fail('Enter whole minutes between 1 and 600.');
+  const [y,mo,d]=date.split('-').map(Number);
+  const topic=$('#f-topic').value,status=$('#f-status').value,note=$('#f-note').value.trim();
+  const now=Date.now();
+  if(id){
+    const s=state.sessions.find(x=>x.id===id);if(!s)return closeModal();
+    const old=new Date(s.at);
+    const at=new Date(y,mo-1,d,old.getHours(),old.getMinutes(),old.getSeconds()).getTime();
+    if(dateInputVal(s.at)!==date)s.at=Math.min(at,now);
+    if(min!==Math.round(s.secs/60)){s.secs=min*60;if(s.manual)s.tier=tierForMinutes(min);}
+    s.topic=topic;s.status=status;s.note=note;
+    toast('Session updated.');
+  }else{
+    let at=new Date(y,mo-1,d,12,0,0).getTime();
+    if(date===dateInputVal(now))at=now;
+    state.sessions.push({id:uid(),topic,tier:tierForMinutes(min),secs:min*60,status,at:Math.min(at,now),note,manual:true});
+    toast('Session added.');
+  }
+  save();closeModal();renderAll();
+}
+function askDelete(id){
+  const s=state.sessions.find(x=>x.id===id);if(!s)return;
+  openModal(`<h2>Delete this session?</h2>
+    <p><b>${esc(TOPIC[s.topic].name)}</b> · ${fmtDate(s.at)} · ${fmtDur(s.secs)} (${s.status}). It will be removed from your garden and weekly totals.</p>
+    <div class="btns two"><button class="btn" data-act="close" data-autofocus>Cancel</button><button class="btn danger" data-act="del-yes" data-id="${id}" id="btn-del-yes">Delete</button></div>`,()=>closeModal());
+}
+
+
+/* ---------- Garden screen ---------- */
+function plantAt(s){ // drawn at the origin (cell centre)
+  const tp=TOPIC[s.topic],f=FL[tp.flower],wil=s.status!=='bloomed',T=TIERS[s.tier]||TIERS[45];
+  const h=16+T.ti*5,sc=.34+T.ti*.05;
+  let o=`<ellipse cx="0" cy="1" rx="10" ry="4.5" fill="rgba(20,60,10,.28)"/>`;
+  if(wil)o+=`<path d="M0 0 Q0 ${-h} 6 ${-h}" fill="none" stroke="${STEM_W}" stroke-width="2" stroke-linecap="round"/>`+headAt(tp.flower,WITHER,6,-h,sc*.9,1,125);
+  else o+=`<path d="M0 0 L0 ${-h}" stroke="${STEM}" stroke-width="2" stroke-linecap="round"/><path d="M0 ${-h*.35} q6 -6 11 -1 q-5 5 -11 1z" fill="${LEAF}"/><path d="M0 ${-h*.5} q-6 -6 -11 -1 q5 5 11 1z" fill="${LEAF}"/>`+headAt(tp.flower,f,0,-h,sc,Math.min(2,T.layers));
+  return o;
+}
+function isoPlot(list,n,seed){
+  const half=185,cw=half/n,ch=cw/2,ox=200,oy=108,t=26,k=cw/34;
+  let o=`<svg viewBox="0 0 400 350" class="plot" role="img" aria-label="${list.length} flowers planted on a grass plot"><defs><filter id="shblur" x="-10%" y="-10%" width="120%" height="130%"><feGaussianBlur stdDeviation="4"/></filter></defs>`;
+  { // soft footprint shadow, tucked right under the soil edge
+    const cyd=oy+n*ch+t+5,k2=.95;
+    o+=`<path d="M${ox} ${cyd-k2*n*ch} L${ox+k2*n*cw} ${cyd} L${ox} ${cyd+k2*n*ch} L${ox-k2*n*cw} ${cyd}Z" fill="rgba(0,0,0,.2)" filter="url(#shblur)"/>`;
+  }
+  const L=[ox-n*cw,oy+n*ch],B=[ox,oy+2*n*ch],R=[ox+n*cw,oy+n*ch];
+  o+=`<path d="M${L[0]} ${L[1]} L${B[0]} ${B[1]} L${B[0]} ${B[1]+t} L${L[0]} ${L[1]+t}Z" fill="#7C4C28"/>`;
+  o+=`<path d="M${B[0]} ${B[1]} L${R[0]} ${R[1]} L${R[0]} ${R[1]+t} L${B[0]} ${B[1]+t}Z" fill="#573418"/>`;
+  o+=`<path d="M${L[0]} ${L[1]} L${B[0]} ${B[1]} L${B[0]} ${B[1]+7} L${L[0]} ${L[1]+7}Z" fill="#74B33F"/>`;
+  o+=`<path d="M${B[0]} ${B[1]} L${R[0]} ${R[1]} L${R[0]} ${R[1]+7} L${B[0]} ${B[1]+7}Z" fill="#5E9A32"/>`;
+  for(let i=1;i<n;i++){
+    o+=`<path d="M${L[0]+i*cw} ${L[1]+i*ch+7} v${t-7}" stroke="rgba(0,0,0,.14)" stroke-width="1.2"/><path d="M${B[0]+i*cw} ${B[1]-i*ch+7} v${t-7}" stroke="rgba(0,0,0,.14)" stroke-width="1.2"/>`;
+  }
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++){
+    const x=ox+(c-r)*cw,y=oy+(c+r)*ch;
+    o+=`<path d="M${x} ${y} L${x+cw} ${y+ch} L${x} ${y+2*ch} L${x-cw} ${y+ch}Z" fill="${(r+c)%2?'#94D151':'#87C648'}" stroke="rgba(50,100,20,.14)" stroke-width="1"/>`;
+  }
+  const cells=Array.from({length:n*n},(_,i)=>i);
+  let h=seed>>>0||1;const rnd=()=>{h|=0;h=h+0x6D2B79F5|0;let t2=Math.imul(h^h>>>15,1|h);t2=t2+Math.imul(t2^t2>>>7,61|t2)^t2;return((t2^t2>>>14)>>>0)/4294967296;};
+  for(let i=cells.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[cells[i],cells[j]]=[cells[j],cells[i]];}
+  list.map((s,i)=>({s,r:Math.floor(cells[i]/n),c:cells[i]%n})).sort((a,b)=>(a.r+a.c)-(b.r+b.c)||a.r-b.r)
+    .forEach(({s,r,c})=>{o+=`<g transform="translate(${(ox+(c-r)*cw).toFixed(1)} ${(oy+(c+r+1)*ch+1).toFixed(1)}) scale(${k.toFixed(3)})">${plantAt(s)}</g>`;});
+  return o+'</svg>';
+}
+
+let gRange='week',gOff=0;
+function isDev(){return /[?&]dev=1\b/.test(location.search)||location.hash==='#dev';}
+const DEMO_NOTES=['Grantor vs. revocable trust','RMD calculation order','Roth conversion ordering','Passive activity loss limits','Duration vs. convexity','Needs analysis for life insurance','Capstone case: client cash-flow assumptions'];
+function demoSessions(){
+  const out=[],now=new Date(),ids=TOPICS.map(t=>t.id);
+  let seed=11;const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646;};
+  const sinceMon=(now.getDay()+6)%7;let k=0;
+  for(let back=sinceMon+14;back>=0;back--){
+    const day=new Date(now.getFullYear(),now.getMonth(),now.getDate()-back),dow=(day.getDay()+6)%7;
+    if(back>0&&rnd()<.14)continue;
+    const n=dow>=5?1:(rnd()<.55?2:1)+(rnd()<.2?1:0);
+    for(let i=0;i<n;i++){
+      const at=new Date(day.getFullYear(),day.getMonth(),day.getDate(),[7,12,18,20][Math.min(3,i+(dow>=5?1:0))]+Math.floor(rnd()*2),Math.floor(rnd()*50)).getTime();
+      if(at>Date.now())continue;
+      const tier=[25,45,60,90][Math.floor(rnd()*4)],wither=k%8===3,topic=ids[k%ids.length];
+      const secs=wither?Math.round(tier*(.3+rnd()*.5))*60:tier*60;
+      out.push({id:'demo'+k+Date.now().toString(36),topic,tier,secs,status:wither?'withered':'bloomed',at,note:k%5===2?DEMO_NOTES[k%DEMO_NOTES.length]:'',manual:false,demo:true});k++;
+    }
+  }
+  return out;
+}
+function rangeBounds(v,off){
+  const n=new Date();
+  if(v==='day'){const a=new Date(n.getFullYear(),n.getMonth(),n.getDate()+off);return [a.getTime(),new Date(a.getFullYear(),a.getMonth(),a.getDate()+1).getTime()];}
+  if(v==='week'){const w=new Date(weekStart(n));const a=new Date(w.getFullYear(),w.getMonth(),w.getDate()+7*off);return [a.getTime(),new Date(a.getFullYear(),a.getMonth(),a.getDate()+7).getTime()];}
+  if(v==='month'){const a=new Date(n.getFullYear(),n.getMonth()+off,1);return [a.getTime(),new Date(a.getFullYear(),a.getMonth()+1,1).getTime()];}
+  const a=new Date(n.getFullYear()+off,0,1);return [a.getTime(),new Date(a.getFullYear()+1,0,1).getTime()];
+}
+function rangeLabel(v,off,a,b){
+  const md={month:'short',day:'numeric'};
+  if(v==='day')return off===0?'Today':new Date(a).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+  if(v==='week')return new Date(a).toLocaleDateString(undefined,md)+' to '+new Date(b-1).toLocaleDateString(undefined,md);
+  if(v==='month')return new Date(a).toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  return String(new Date(a).getFullYear());
+}
+function bucketize(v,a,list){
+  let n,idx,lab;
+  if(v==='day'){n=24;idx=s=>new Date(s.at).getHours();lab=i=>i%6===0?['12a','6a','12p','6p'][i/6]:'';}
+  else if(v==='week'){n=7;idx=s=>(new Date(s.at).getDay()+6)%7;lab=i=>['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i];}
+  else if(v==='month'){const d=new Date(a);n=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();idx=s=>new Date(s.at).getDate()-1;lab=i=>(i===0||(i+1)%5===0)?String(i+1):'';}
+  else{n=12;idx=s=>new Date(s.at).getMonth();lab=i=>'JFMAMJJASOND'[i];}
+  const vals=Array(n).fill(0);
+  list.forEach(s=>{const i=idx(s);if(i>=0&&i<n)vals[i]+=s.secs;});
+  return {vals,labels:vals.map((_,i)=>lab(i))};
+}
+function chartSVG(vals,labels){
+  const peakMin=Math.max(0,...vals)/60,hours=peakMin>120;
+  const steps=hours?[4,8,12,16,20,24,40,80,160]:[20,40,60,80,100,120];
+  const peak=hours?peakMin/60:peakMin,ymax=steps.find(x=>x>=peak)||steps[steps.length-1];
+  const W=340,Hh=186,Lm=34,Rm=8,Tm=10,Bm=26,pw=W-Lm-Rm,ph=Hh-Tm-Bm,n=vals.length,slot=pw/n,bw=Math.min(9,Math.max(2.5,slot*.45));
+  let o=`<svg viewBox="0 0 ${W} ${Hh}" class="chart" role="img" aria-label="Focused time bar chart">`;
+  for(let i=0;i<=4;i++){const y=Tm+ph*(1-i/4);o+=`<line x1="${Lm}" x2="${W-Rm}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/><text x="${Lm-6}" y="${y+3.4}" text-anchor="end">${Math.round(ymax*i/4)}${hours?'h':'m'}</text>`;}
+  vals.forEach((v,i)=>{
+    const val=hours?v/3600:v/60,h=ph*val/ymax,x=Lm+slot*i+(slot-bw)/2;
+    if(v>0)o+=`<rect x="${x.toFixed(1)}" y="${(Tm+ph-Math.max(h,2)).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h,2).toFixed(1)}" rx="${(bw/2.5).toFixed(1)}" fill="var(--sage)"/>`;
+    if(labels[i])o+=`<text x="${(Lm+slot*i+slot/2).toFixed(1)}" y="${Hh-8}" text-anchor="middle">${labels[i]}</text>`;
+  });
+  return o+'</svg>';
+}
+
+function renderGarden(){
+  const el=$('#view-garden');
+  const [a,b]=rangeBounds(gRange,gOff);
+  const list=state.sessions.filter(s=>s.at>=a&&s.at<b).sort((x,y)=>x.at-y.at);
+  const bl=list.filter(s=>s.status==='bloomed').length,wi=list.length-bl;
+  const shown=list.slice(-144),n=clamp(Math.ceil(Math.sqrt(shown.length)),6,12);
+  const bk=bucketize(gRange,a,list),rangeSecs=list.reduce((x,s)=>x+s.secs,0);
+  const hudT=gOff===0?{day:'Today',week:'This week',month:'This month',year:'This year'}[gRange]:rangeLabel(gRange,gOff,a,b);
+  const wk=weekTotals(),goal=GOAL_H*3600,stretch=STRETCH_H*3600,scale=Math.max(stretch,wk.total);
+  const all=state.sessions.slice().sort((x,y)=>y.at-x.at),demoOn=state.sessions.some(s=>s.demo);
+  const devOn=isDev();
+  el.innerHTML=`
+    <div class="pad">
+      <header class="hdr"><h1 class="title">Garden</h1><a class="rbtn" href="#focus" id="link-focus" aria-label="Back to timer">__CLOCK__</a></header>
+      <div class="seg" role="group" aria-label="Time range">${['day','week','month','year'].map(v=>`<button data-act="range" data-v="${v}" aria-pressed="${gRange===v}">${v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</div>
+      <div class="rnav"><button data-act="prev" aria-label="Previous ${gRange}">‹</button><span id="range-label">${rangeLabel(gRange,gOff,a,b)}</span><button data-act="next" aria-label="Next ${gRange}" ${gOff>=0?'disabled':''}>›</button></div>
+      <div class="plotbox">${isoPlot(shown,n,(a/1000|0)+gRange.length*7919+n)}
+        <div class="hud" id="hud"><span class="hud-t">${hudT}</span><span class="hud-r"><i class="hd"></i><b id="rng-bloomed">${bl}</b> bloomed</span><span class="hud-r"><i class="hd w"></i><b id="rng-withered">${wi}</b> withered</span></div></div>
+      ${list.length?(list.length>144?'<p class="empty-note">Showing the latest 144 flowers.</p>':''):'<p class="empty-note">Nothing planted in this period yet. Finish a focus session to grow a flower here.</p>'}
+    </div>
+    <div class="panel"><div class="pad">
+      <section><h2 class="hand">Focused time distribution</h2>
+        <p class="hint" id="chart-total">Total focused time: ${fmtHM(rangeSecs)}</p>${chartSVG(bk.vals,bk.labels)}</section>
+      <section><h2 class="hand">This week</h2>
+        <div class="goalrow"><div class="meter" role="img" aria-label="${fmtHM(wk.total)} focused this week, goal ${GOAL_H} hours, stretch goal ${STRETCH_H} hours"><div class="zone" style="left:${goal/scale*100}%"></div><div class="fill ${wk.total>=goal?'hit':''}" style="width:${wk.total/scale*100}%"></div></div><span class="glabel" id="wk-total">${fmtHM(wk.total)} / ${GOAL_H}h</span></div>
+        ${Object.entries(GROUPS).map(([g,info])=>`<div class="split-row" style="--gc:${info.color}" data-g="${g}"><div class="l"><span><span class="dot"></span>${info.name}</span><span>${fmtHM(wk.by[g])}${wk.total?' · '+Math.round(wk.by[g]/wk.total*100)+'%':''}</span></div><div class="sbar"><i style="width:${wk.total?wk.by[g]/wk.total*100:0}%"></i></div></div>`).join('')}</section>
+      <section><div class="sec-h"><h2 class="hand">Sessions</h2><button class="btn small primary" data-act="add" id="btn-add">Add session</button></div>
+        ${all.length?`<ul class="list" id="slist">${all.map(s=>{const tp=TOPIC[s.topic];return `<li class="row-item" data-sid="${s.id}">
+          <button class="row-btn" data-act="edit" data-id="${s.id}" aria-label="Edit ${esc(tp.name)} session, ${s.status}, ${fmtDate(s.at)}"><span class="thumb">${miniSVG(tp.flower,s.tier,s.status)}</span>
+          <span class="ri-main"><span class="ri-name">${esc(tp.name)}</span>
+          <span class="ri-meta">${fmtDate(s.at)} · ${fmtTime(s.at)} · ${fmtDur(s.secs)} · ${FLOWER_NAME[tp.flower]}${s.manual?' · Manual':''}</span>
+          ${s.note?`<span class="ri-note">Revisit: ${esc(s.note)}</span>`:''}</span></button>
+          <button class="more" data-act="menu" data-id="${s.id}" aria-haspopup="menu" aria-expanded="false" aria-label="More actions">⋯</button></li>`;}).join('')}</ul>`
+        :`<p class="hint">No sessions yet. Finish a timer or add time you studied without it.</p>`}</section>
+      <p class="fine">Totals count the time you actually focused, including flowers that withered. Paused time never counts. Weeks run Monday to Sunday. The hatched area of the bar is the ${STRETCH_H}h stretch goal.</p>
+      ${devOn||demoOn?`<div class="devrow"><div><b>Seed demo data</b><span class="hint">Developer tool. Adds about 3 weeks of sample sessions. Turn off to remove them.</span></div>
+        <button class="sw" role="switch" id="demo-toggle" data-act="demo" aria-checked="${demoOn}" aria-label="Seed demo data"><i></i></button></div>`:''}
+    </div></div>`.replace('__CLOCK__',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg>`).replace('__INFO__',`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 7v4.5"/><circle cx="8" cy="4.6" r=".6" fill="currentColor"/></svg>`);
+}
+function renderAll(){renderFocus();renderGarden();}
+
+/* ---------- routing + events ---------- */
+function route(){
+  const h=location.hash.slice(1),v=(h==='garden'||h==='progress'||h==='dev')?'garden':'focus';
+  document.body.dataset.view=v;
+  $('#view-focus').hidden=v!=='focus';$('#view-garden').hidden=v!=='garden';
+  if(v==='garden')renderGarden();
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',route);
+
+function closeMenus(){document.querySelectorAll('.menu').forEach(m=>m.remove());document.querySelectorAll('.more[aria-expanded="true"]').forEach(x=>x.setAttribute('aria-expanded','false'));}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.querySelector('.more[aria-expanded="true"]');if(m){closeMenus();m.focus();}}});
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.menu,[data-act="menu"]'))closeMenus();
+  const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
+  const act=b.dataset.act,id=b.dataset.id;
+  switch(act){
+    case 'start':startTimer();break;
+    case 'pause':pauseTimer();break;
+    case 'resume':resumeTimer();break;
+    case 'stop':askWither('stop');break;
+    case 'giveup':askWither('giveup');break;
+    case 'keep':if(modalKeep)modalKeep();break;
+    case 'wither':endTimer(false);break;
+    case 'sheet':openSheet();break;
+    case 'topic':
+      state.prefs.topic=id;save();
+      document.querySelectorAll('#modal-root [data-act="topic"]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.id===id)));
+      renderFocus();break;
+    case 'tier':
+      state.prefs.tier=Number(b.dataset.m);save();
+      document.querySelectorAll('#modal-root [data-act="tier"]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.m===b.dataset.m)));
+      {const d=$('#tier-desc');if(d)d.textContent=TIERS[state.prefs.tier].desc+'. Longer sessions grow bigger, fuller flowers.';}
+      renderFocus();break;
+    case 'res-skip':closeModal();break;
+    case 'res-save':{
+      const s=state.sessions.find(x=>x.id===id),n=$('#res-note').value.trim();
+      if(s){s.note=n;save();renderAll();if(n)toast('Note saved to your garden.');}
+      closeModal();break;}
+    case 'range':gRange=b.dataset.v;gOff=0;renderGarden();break;
+    case 'prev':gOff--;renderGarden();break;
+    case 'next':if(gOff<0){gOff++;renderGarden();}break;
+    case 'add':sessionForm(null);break;
+    case 'edit':closeMenus();sessionForm(id);break;
+    case 'del':closeMenus();askDelete(id);break;
+    case 'menu':{
+      const was=b.getAttribute('aria-expanded')==='true';closeMenus();
+      if(!was){b.setAttribute('aria-expanded','true');const m=document.createElement('div');m.className='menu';m.setAttribute('role','menu');
+        m.innerHTML=`<button role="menuitem" data-act="edit" data-id="${id}">Edit</button><button role="menuitem" class="del" data-act="del" data-id="${id}">Delete</button>`;
+        b.closest('.row-item').appendChild(m);m.querySelector('button').focus();}
+      break;}
+    case 'del-yes':state.sessions=state.sessions.filter(x=>x.id!==id);save();closeModal(true);renderAll();toast('Session deleted.');break;
+    case 'close':closeModal();break;
+    case 'demo':{
+      if(state.sessions.some(x=>x.demo)){state.sessions=state.sessions.filter(x=>!x.demo);toast('Demo data removed.');}
+      else{state.sessions.push(...demoSessions());toast('Demo data added.');}
+      save();renderAll();break;}
+  }
+});
+document.addEventListener('submit',e=>{if(e.target.id==='sform'){e.preventDefault();submitSession(e.target);}});
+
+/* ---------- boot ---------- */
+setInterval(()=>updateTick(false),250);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){updateTick(false);if(state.timer&&state.timer.resumedAt!=null)requestWake();}});
+window.addEventListener('storage',e=>{if(e.key===LS_KEY){state=load();renderAll();}});
+renderAll();
+route();
+// A timer that finished while the page was closed is settled here and shows its result.
+updateTick(false);
+})();
+</script>
