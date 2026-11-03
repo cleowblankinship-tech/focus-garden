@@ -1,4 +1,4 @@
-<title>Focus Garden</title>
+<title>Garden</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -546,7 +546,7 @@ function renderFocus(){
   else ctl=`<button class="pillbtn" data-act="${running?'pause':'resume'}" id="${running?'btn-pause':'btn-resume'}">${running?'Pause':'Resume'}</button>
     <div class="row"><button class="quiet" data-act="stop" id="btn-stop">Stop early</button><button class="quiet giveup" data-act="giveup" id="btn-giveup">Give up</button></div>`;
   el.innerHTML=`<div class="pad fwrap">
-    <header class="hdr"><h1 class="title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14V9"/><path d="M12 10c-3.5 0-4.5-2.5-4.5-5 3.5 0 4.5 2 4.5 5zM12 10c3.5 0 4.5-2.5 4.5-5-3.5 0-4.5 2-4.5 5z"/><path d="M3 18l9 4 9-4-9-4z"/></svg>Focus Garden</h1><a class="rbtn" href="#garden" id="link-garden" aria-label="Open garden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14V9"/><path d="M12 10c-3.5 0-4.5-2.5-4.5-5 3.5 0 4.5 2 4.5 5zM12 10c3.5 0 4.5-2.5 4.5-5-3.5 0-4.5 2-4.5 5z"/><path d="M3 18l9 4 9-4-9-4z"/></svg></a></header>
+    <header class="hdr"><h1 class="title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14V9"/><path d="M12 10c-3.5 0-4.5-2.5-4.5-5 3.5 0 4.5 2 4.5 5zM12 10c3.5 0 4.5-2.5 4.5-5-3.5 0-4.5 2-4.5 5z"/><path d="M3 18l9 4 9-4-9-4z"/></svg>Garden</h1><a class="rbtn" href="#garden" id="link-garden" aria-label="Open garden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14V9"/><path d="M12 10c-3.5 0-4.5-2.5-4.5-5 3.5 0 4.5 2 4.5 5zM12 10c3.5 0 4.5-2.5 4.5-5-3.5 0-4.5 2-4.5 5z"/><path d="M3 18l9 4 9-4-9-4z"/></svg></a></header>
     <div class="focus ${running?'alive':''}" id="stage">
       <p class="say" id="say"></p>
       <div class="discwrap" id="discwrap"><div class="disc" id="flower"></div></div>
@@ -574,7 +574,7 @@ function updateTick(force){
   }
   $('#say').textContent=!t?'Ready to plant':(t.resumedAt!=null?STAGE_LABEL[stage]+' · stay focused':'Paused · your flower is safe');
   const pill=$('#tpill')||$('#btn-topic');if(pill)pill.textContent=`${topic.name} · ${tier} min`;
-  document.title=t?`${clock} · Focus Garden`:'Focus Garden';
+  document.title=t?`${clock} · Garden`:'Garden';
 }
 function openSheet(){
   openModal(`<h2>Choose your flower</h2>
